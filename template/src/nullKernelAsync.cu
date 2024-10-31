@@ -114,7 +114,7 @@ main()
 
             chTimerGetTime( &start );
             for ( int i = 0; i < cIterations; i++ ) {
-                NullKernel<<<1,1>>>();
+                NullKernel<<<blockNums[b],threadNums[t]>>>();
             }
             cudaDeviceSynchronize();
             chTimerGetTime( &stop );
@@ -133,7 +133,7 @@ main()
 
             chTimerGetTime( &start );
             for ( int i = 0; i < cIterations; i++ ) {
-                NullKernel<<<1,1>>>();
+                NullKernel<<<blockNums[b],threadNums[t]>>>();
                 cudaDeviceSynchronize();
             }
             chTimerGetTime( &stop );
