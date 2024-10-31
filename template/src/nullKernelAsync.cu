@@ -45,16 +45,16 @@ __global__
 void
 NullKernel()
 {
-    clock_t start = clock();
-
-    int sum = 0;
-    for (int i = 0; i < 1000000; i++){
-        sum += i;
-    }
-
-    clock_t end = clock();
-
-    printf("Busy wait took %.2f cycles", (double) end - start);
+    //clock_t start = clock();
+//
+    //int sum = 0;
+    //for (int i = 0; i < 1000000; i++){
+    //    sum += i;
+    //}
+//
+    //clock_t end = clock();
+//
+    //printf("Busy wait took %.2f cycles", (double) end - start);
 }
 
 int
@@ -155,38 +155,25 @@ main()
     int numElements = 50000;
     size_t size = numElements * sizeof(int);
 
-    int *h_Data = (int *)malloc(size);
+    int *h_Data_pageable = (int *)malloc(size);
+    int *h_Data_pinned = (int *)cudaMallocHost (size);
 
     for (int i = 0; i < numElements; ++i) {
-        h_Data[i] = rand();
+        h_Data_pageable[i] = rand();
+        h_Data_pinned[i] = rand();
     }
 
     int *d_Data = NULL;
-    err = cudaMalloc((void **)&d_Data, size);
+    cudaMalloc((void **)&d_Data, size);
 
-    if (err != cudaSuccess) {
-        fprintf(stderr, "Failed to allocate device vector A (error code %s)!\n",
-            cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
+    printf( "Measuring pageable data movement from host to device... " ); fflush( stdout );
+    chTimerGetTime( &start );
+    cudaMemcpy(d_Data, h_Data_pageable, size, cudaMemcpyHostToDevice);
+    chTimerGetTime( &stop );
+    double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+    printf( "%.2f us\n", microseconds );
 
-    err = cudaMemcpy(d_Data, h_Data, size, cudaMemcpyHostToDevice);
-
-    if (err != cudaSuccess) {
-        fprintf(stderr,
-            "Failed to copy vector A from host to device (error code %s)!\n",
-            cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
-
-    err = cudaMemcpy(h_Data, d_Data, size, cudaMemcpyDeviceToHost);
-
-    if (err != cudaSuccess) {
-        fprintf(stderr,
-            "Failed to copy vector C from device to host (error code %s)!\n",
-            cudaGetErrorString(err));
-        exit(EXIT_FAILURE);
-    }
+    cudaMemcpy(h_Data_pageable, d_Data, size, cudaMemcpyDeviceToHost);
 
     return 0;
 }
