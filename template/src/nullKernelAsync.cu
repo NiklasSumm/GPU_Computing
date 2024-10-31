@@ -37,6 +37,7 @@
  */
 
 #include <stdio.h>
+#include <time.h>
 
 #include "chTimer.h"
 
@@ -44,6 +45,15 @@ __global__
 void
 NullKernel()
 {
+    clock_t start = clock();
+
+    int sum = 0;
+    for (int i = 0; i < 10000; i++){
+        sum += i;
+    }
+
+    clock_t end = clock();
+    printf("Busy wait took " + std::to_string((double) end - start) + " cycles");
 }
 
 int
@@ -66,6 +76,110 @@ main()
         double usPerLaunch = microseconds / (float) cIterations;
 
         printf( "%.2f us\n", usPerLaunch );
+    }
+
+
+    printf( "Measuring synchronous launch time... " ); fflush( stdout );
+
+    CUDA_LAUNCH_BLOCKING = 1
+
+    chTimerGetTime( &start );
+    for ( int i = 0; i < cIterations; i++ ) {
+        NullKernel<<<1,1>>>();
+    }
+    cudaDeviceSynchronize();
+    chTimerGetTime( &stop );
+
+    {
+        double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+        double usPerLaunch = microseconds / (float) cIterations;
+
+        printf( "%.2f us\n", usPerLaunch );
+    }
+
+
+    int blockNums[10] = {1, 2, 4, 8, 16, 64, 256, 1024, 4096, 16384};
+    int threadNums[10] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
+
+    for (int b = 0; b < std:size(blockNums); b++){
+        for (int t = 0; b < std:size(threadNums); t++){
+            CUDA_LAUNCH_BLOCKING = 0
+
+            const int cIterations = 1000000;
+            printf( "Measuring asynchronous launch time... " ); fflush( stdout );
+
+            chTimerTimestamp start, stop;
+
+            chTimerGetTime( &start );
+            for ( int i = 0; i < cIterations; i++ ) {
+                NullKernel<<<1,1>>>();
+            }
+            cudaDeviceSynchronize();
+            chTimerGetTime( &stop );
+
+            {
+                double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+                double usPerLaunch = microseconds / (float) cIterations;
+
+                printf( "%.2f us\n", usPerLaunch );
+            }
+
+
+            printf( "Measuring synchronous launch time... " ); fflush( stdout );
+
+            CUDA_LAUNCH_BLOCKING = 1
+
+            chTimerGetTime( &start );
+            for ( int i = 0; i < cIterations; i++ ) {
+                NullKernel<<<1,1>>>();
+            }
+            cudaDeviceSynchronize();
+            chTimerGetTime( &stop );
+
+            {
+                double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+                double usPerLaunch = microseconds / (float) cIterations;
+
+                printf( "%.2f us\n", usPerLaunch );
+            }
+        }
+    }
+
+
+    int numElements = 50000;
+    size_t size = numElements * sizeof(int);
+
+    int *h_Data = (int *)malloc(size);
+
+    for (int i = 0; i < numElements; ++i) {
+        h_Data[i] = rand();
+    }
+
+    int *d_Data = NULL;
+    err = cudaMalloc((void **)&d_Data, size);
+
+    if (err != cudaSuccess) {
+        fprintf(stderr, "Failed to allocate device vector A (error code %s)!\n",
+            cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+
+    err = cudaMemcpy(d_Data, h_data, size, cudaMemcpyHostToDevice);
+
+    if (err != cudaSuccess) {
+        fprintf(stderr,
+            "Failed to copy vector A from host to device (error code %s)!\n",
+            cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+
+    err = cudaMemcpy(h_Data, d_Data, size, cudaMemcpyDeviceToHost);
+
+    if (err != cudaSuccess) {
+        fprintf(stderr,
+            "Failed to copy vector C from device to host (error code %s)!\n",
+            cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
     }
 
     return 0;
