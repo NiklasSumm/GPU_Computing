@@ -53,7 +53,7 @@ NullKernel()
     }
 
     clock_t end = clock();
-    printf("Busy wait took " + std::to_string((double) end - start) + " cycles");
+    printf("Busy wait took %.2f cycles", (double) end - start);
 }
 
 int
