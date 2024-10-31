@@ -160,7 +160,7 @@ main()
 
     for (int i = 0; i < numElements; ++i) {
         h_Data_pageable[i] = rand();
-        h_Data_pinned[i] = rand();
+        //h_Data_pinned[i] = rand();
     }
 
     int *d_Data = NULL;
