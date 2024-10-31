@@ -45,15 +45,15 @@ __global__
 void
 NullKernel()
 {
-    clock_t start = clock();
+    //clock_t start = clock();
 
-    int sum = 0;
-    for (int i = 0; i < 10000; i++){
-        sum += i;
-    }
+    //int sum = 0;
+    //for (int i = 0; i < 10000; i++){
+    //    sum += i;
+    //}
 
-    clock_t end = clock();
-    printf("Busy wait took %.2f cycles", (double) end - start);
+    //clock_t end = clock();
+    //printf("Busy wait took %.2f cycles", (double) end - start);
 }
 
 int
