@@ -156,7 +156,7 @@ main()
 
     int numElements[11] = {1 * factor_kB, 4 * factor_kB, 16 * factor_kB, 64 * factor_kB, 256 * factor_kB, 1 * factor_MB, 4 * factor_MB, 16 * factor_MB, 64 * factor_MB, 256 * factor_MB, 1024 * factor_MB };
 
-    for ( int e = 0; b <  sizeof(numElements) / sizeof(numElements[0]); b++ ){
+    for ( int e = 0; e <  sizeof(numElements) / sizeof(numElements[0]); e++ ){
         size_t size = numElements[e] * sizeof(int);
 
         printf( "Data size %d bytes\n", size );
