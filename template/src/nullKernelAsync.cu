@@ -156,7 +156,8 @@ main()
     size_t size = numElements * sizeof(int);
 
     int *h_Data_pageable = (int *)malloc(size);
-    int *h_Data_pinned = (int *)cudaMallocHost(size);
+    int *h_Data_pinned;
+    cudaMallocHost((void **) &h_Data_pinned, size);
 
     for (int i = 0; i < numElements; ++i) {
         h_Data_pageable[i] = rand();
