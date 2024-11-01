@@ -156,11 +156,11 @@ main()
     size_t size = numElements * sizeof(int);
 
     int *h_Data_pageable = (int *)malloc(size);
-    //int *h_Data_pinned = (int *)cudaMallocHost(size);
+    int *h_Data_pinned = (int *)cudaMallocHost(size);
 
     for (int i = 0; i < numElements; ++i) {
         h_Data_pageable[i] = rand();
-        //h_Data_pinned[i] = rand();
+        h_Data_pinned[i] = rand();
     }
 
     int *d_Data = NULL;
@@ -173,7 +173,13 @@ main()
     double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
     printf( "%.2f us\n", microseconds );
 
+    printf( "Measuring pageable data movement from device to host... " ); fflush( stdout );
+    chTimerGetTime( &start );
     cudaMemcpy(h_Data_pageable, d_Data, size, cudaMemcpyDeviceToHost);
+    chTimerGetTime( &stop );
+    double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+    printf( "%.2f us\n", microseconds );
 
     return 0;
 }
+
