@@ -156,8 +156,8 @@ main()
 
     int numElements[11] = {1 * factor_kB, 4 * factor_kB, 16 * factor_kB, 64 * factor_kB, 256 * factor_kB, 1 * factor_MB, 4 * factor_MB, 16 * factor_MB, 64 * factor_MB, 256 * factor_MB, 1024 * factor_MB };
 
-    for ( int b = 0; b <  sizeof(numElements) / sizeof(numElements[0]); b++ ){
-        size_t size = numElements[b] * sizeof(int);
+    for ( int e = 0; b <  sizeof(numElements) / sizeof(numElements[0]); b++ ){
+        size_t size = numElements[e] * sizeof(int);
 
         printf( "Data size %d bytes\n", size );
 
@@ -165,7 +165,7 @@ main()
         int *h_Data_pinned;
         cudaMallocHost((void **) &h_Data_pinned, size);
 
-        for (int i = 0; i < numElements; ++i) {
+        for (int i = 0; i < numElements[e]; ++i) {
             h_Data_pageable[i] = rand();
             h_Data_pinned[i] = rand();
         }
