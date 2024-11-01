@@ -177,9 +177,22 @@ main()
     chTimerGetTime( &start );
     cudaMemcpy(h_Data_pageable, d_Data, size, cudaMemcpyDeviceToHost);
     chTimerGetTime( &stop );
-    double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+    microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+    printf( "%.2f us\n", microseconds );
+
+    printf( "Measuring pinned data movement from host to device... " ); fflush( stdout );
+    chTimerGetTime( &start );
+    cudaMemcpy(d_Data, h_Data_pinned, size, cudaMemcpyHostToDevice);
+    chTimerGetTime( &stop );
+    microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+    printf( "%.2f us\n", microseconds );
+
+    printf( "Measuring pinned data movement from device to host... " ); fflush( stdout );
+    chTimerGetTime( &start );
+    cudaMemcpy(h_Data_pinned, d_Data, size, cudaMemcpyDeviceToHost);
+    chTimerGetTime( &stop );
+    microseconds = 1e6*chTimerElapsedTime( &start, &stop );
     printf( "%.2f us\n", microseconds );
 
     return 0;
 }
-
