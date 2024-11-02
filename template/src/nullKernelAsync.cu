@@ -161,9 +161,9 @@ main()
 
 
     //Warmup copy
-    printf("Doing a warm-up copy...\n")
+    printf("Doing a warm-up copy...\n");
     copyData(1024);
-    printf("Warm-up copy done!\n")
+    printf("Warm-up copy done!\n");
 
     int factor_kB = 1024 / sizeof(int);
     int factor_MB = 1024 * factor_kB;
