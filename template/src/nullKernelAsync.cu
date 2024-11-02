@@ -158,55 +158,52 @@ main()
     }
 
 
-    //int blockNums[10] = {1, 2, 4, 8, 16, 64, 256, 1024, 4096, 16384};
-    //int threadNums[11] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
-//
-    //for ( int b = 0; b <  sizeof(blockNums) / sizeof(blockNums[0]); b++ ){
-    //    for ( int t = 0; t < sizeof(threadNums) / sizeof(threadNums[0]); t++ ){
-    //        //CUDA_LAUNCH_BLOCKING = 0;
-//
-    //        printf( "Blocks: %d - ", blockNums[b] );
-    //        printf( "Threads per Block %d\n", threadNums[t]);
-//
-    //        const int cIterations = 1000000;
-    //        printf( "Measuring asynchronous launch time... " ); fflush( stdout );
-//
-    //        chTimerTimestamp start, stop;
-//
-    //        chTimerGetTime( &start );
-    //        for ( int i = 0; i < cIterations; i++ ) {
-    //            NullKernel<<<blockNums[b],threadNums[t]>>>();
-    //        }
-    //        cudaDeviceSynchronize();
-    //        chTimerGetTime( &stop );
-//
-    //        {
-    //            double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
-    //            double usPerLaunch = microseconds / (float) cIterations;
-//
-    //            printf( "%.2f us\n", usPerLaunch );
-    //        }
-//
-//
-    //        printf( "Measuring synchronous launch time... " ); fflush( stdout );
-//
-    //        //CUDA_LAUNCH_BLOCKING = 1;
-//
-    //        chTimerGetTime( &start );
-    //        for ( int i = 0; i < cIterations; i++ ) {
-    //            NullKernel<<<blockNums[b],threadNums[t]>>>();
-    //            cudaDeviceSynchronize();
-    //        }
-    //        chTimerGetTime( &stop );
-//
-    //        {
-    //            double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
-    //            double usPerLaunch = microseconds / (float) cIterations;
-//
-    //            printf( "%.2f us\n", usPerLaunch );
-    //        }
-    //    }
-    //}
+    int blockNums[10] = {1, 2, 4, 8, 16, 64, 256, 1024, 4096, 16384};
+    int threadNums[11] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
+
+    for ( int b = 0; b <  sizeof(blockNums) / sizeof(blockNums[0]); b++ ){
+        for ( int t = 0; t < sizeof(threadNums) / sizeof(threadNums[0]); t++ ){
+
+            printf( "Blocks: %d - ", blockNums[b] );
+            printf( "Threads per Block %d\n", threadNums[t]);
+
+            const int cIterations = 1000000;
+            printf( "Measuring asynchronous launch time... " ); fflush( stdout );
+
+            chTimerTimestamp start, stop;
+
+            chTimerGetTime( &start );
+            for ( int i = 0; i < cIterations; i++ ) {
+                NullKernel<<<blockNums[b],threadNums[t]>>>();
+            }
+            cudaDeviceSynchronize();
+            chTimerGetTime( &stop );
+
+            {
+                double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+                double usPerLaunch = microseconds / (float) cIterations;
+
+                printf( "%.2f us\n", usPerLaunch );
+            }
+
+
+            printf( "Measuring synchronous launch time... " ); fflush( stdout );
+
+            chTimerGetTime( &start );
+            for ( int i = 0; i < cIterations; i++ ) {
+                NullKernel<<<blockNums[b],threadNums[t]>>>();
+                cudaDeviceSynchronize();
+            }
+            chTimerGetTime( &stop );
+
+            {
+                double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+                double usPerLaunch = microseconds / (float) cIterations;
+
+                printf( "%.2f us\n", usPerLaunch );
+            }
+        }
+    }
 
 
     //Warmup copy
