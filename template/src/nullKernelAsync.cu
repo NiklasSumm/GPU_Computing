@@ -62,6 +62,8 @@ main()
 {
     cudaError_t err = cudaSuccess;
 
+    const int cIterations = 1000000;
+
     //Warmup Kernel launches
     printf("Doing a warm-up kernel launch...\n");
     for ( int i = 0; i < cIterations; i++ ) {
@@ -70,7 +72,6 @@ main()
     cudaDeviceSynchronize();
     printf("Warm-up kernel launch done!\n");
 
-    const int cIterations = 1000;
     printf( "Measuring asynchronous launch time... " ); fflush( stdout );
 
     chTimerTimestamp start, stop;
@@ -193,6 +194,8 @@ void copyData(int array_length){
 
     int *d_Data = NULL;
     cudaMalloc((void **)&d_Data, size);
+
+    chTimerTimestamp start, stop;
 
     printf( "Measuring pageable data movement from host to device... " ); fflush( stdout );
     chTimerGetTime( &start );
