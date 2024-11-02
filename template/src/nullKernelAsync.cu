@@ -62,6 +62,14 @@ main()
 {
     cudaError_t err = cudaSuccess;
 
+    //Warmup Kernel launches
+    printf("Doing a warm-up kernel launch...\n");
+    for ( int i = 0; i < cIterations; i++ ) {
+        NullKernel<<<1,1>>>();
+    }
+    cudaDeviceSynchronize();
+    printf("Warm-up kernel launch done!\n");
+
     const int cIterations = 1000;
     printf( "Measuring asynchronous launch time... " ); fflush( stdout );
 
@@ -151,56 +159,66 @@ main()
     //    }
     //}
 
+
+    //Warmup copy
+    printf("Doing a warm-up copy...\n")
+    copyData(1024);
+    printf("Warm-up copy done!\n")
+
     int factor_kB = 1024 / sizeof(int);
     int factor_MB = 1024 * factor_kB;
 
     int numElements[11] = {1 * factor_kB, 4 * factor_kB, 16 * factor_kB, 64 * factor_kB, 256 * factor_kB, 1 * factor_MB, 4 * factor_MB, 16 * factor_MB, 64 * factor_MB, 256 * factor_MB, 1024 * factor_MB };
 
     for ( int e = 0; e <  sizeof(numElements) / sizeof(numElements[0]); e++ ){
-        size_t size = numElements[e] * sizeof(int);
-
-        printf( "Data size %d bytes\n", size );
-
-        int *h_Data_pageable = (int *)malloc(size);
-        int *h_Data_pinned;
-        cudaMallocHost((void **) &h_Data_pinned, size);
-
-        for (int i = 0; i < numElements[e]; ++i) {
-            h_Data_pageable[i] = rand();
-            h_Data_pinned[i] = rand();
-        }
-
-        int *d_Data = NULL;
-        cudaMalloc((void **)&d_Data, size);
-
-        printf( "Measuring pageable data movement from host to device... " ); fflush( stdout );
-        chTimerGetTime( &start );
-        cudaMemcpy(d_Data, h_Data_pageable, size, cudaMemcpyHostToDevice);
-        chTimerGetTime( &stop );
-        double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
-        printf( "%.2f us\n", microseconds );
-
-        printf( "Measuring pageable data movement from device to host... " ); fflush( stdout );
-        chTimerGetTime( &start );
-        cudaMemcpy(h_Data_pageable, d_Data, size, cudaMemcpyDeviceToHost);
-        chTimerGetTime( &stop );
-        microseconds = 1e6*chTimerElapsedTime( &start, &stop );
-        printf( "%.2f us\n", microseconds );
-
-        printf( "Measuring pinned data movement from host to device... " ); fflush( stdout );
-        chTimerGetTime( &start );
-        cudaMemcpy(d_Data, h_Data_pinned, size, cudaMemcpyHostToDevice);
-        chTimerGetTime( &stop );
-        microseconds = 1e6*chTimerElapsedTime( &start, &stop );
-        printf( "%.2f us\n", microseconds );
-
-        printf( "Measuring pinned data movement from device to host... " ); fflush( stdout );
-        chTimerGetTime( &start );
-        cudaMemcpy(h_Data_pinned, d_Data, size, cudaMemcpyDeviceToHost);
-        chTimerGetTime( &stop );
-        microseconds = 1e6*chTimerElapsedTime( &start, &stop );
-        printf( "%.2f us\n", microseconds );
+        copyData(numElements[e]);
     }
 
     return 0;
+}
+
+void copyData(int array_length){
+    size_t size = array_length * sizeof(int);
+
+    printf( "Data size %d bytes\n", size );
+
+    int *h_Data_pageable = (int *)malloc(size);
+    int *h_Data_pinned;
+    cudaMallocHost((void **) &h_Data_pinned, size);
+
+    for (int i = 0; i < array_length; ++i) {
+        h_Data_pageable[i] = rand();
+        h_Data_pinned[i] = rand();
+    }
+
+    int *d_Data = NULL;
+    cudaMalloc((void **)&d_Data, size);
+
+    printf( "Measuring pageable data movement from host to device... " ); fflush( stdout );
+    chTimerGetTime( &start );
+    cudaMemcpy(d_Data, h_Data_pageable, size, cudaMemcpyHostToDevice);
+    chTimerGetTime( &stop );
+    double microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+    printf( "%.2f us\n", microseconds );
+
+    printf( "Measuring pageable data movement from device to host... " ); fflush( stdout );
+    chTimerGetTime( &start );
+    cudaMemcpy(h_Data_pageable, d_Data, size, cudaMemcpyDeviceToHost);
+    chTimerGetTime( &stop );
+    microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+    printf( "%.2f us\n", microseconds );
+
+    printf( "Measuring pinned data movement from host to device... " ); fflush( stdout );
+    chTimerGetTime( &start );
+    cudaMemcpy(d_Data, h_Data_pinned, size, cudaMemcpyHostToDevice);
+    chTimerGetTime( &stop );
+    microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+    printf( "%.2f us\n", microseconds );
+
+    printf( "Measuring pinned data movement from device to host... " ); fflush( stdout );
+    chTimerGetTime( &start );
+    cudaMemcpy(h_Data_pinned, d_Data, size, cudaMemcpyDeviceToHost);
+    chTimerGetTime( &stop );
+    microseconds = 1e6*chTimerElapsedTime( &start, &stop );
+    printf( "%.2f us\n", microseconds );
 }
