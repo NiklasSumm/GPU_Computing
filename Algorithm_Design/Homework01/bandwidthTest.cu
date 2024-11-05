@@ -124,14 +124,14 @@ void printResultsCSV(unsigned int *memSizes, double *bandwidths,
 void printHelp(void);
 
 __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t num_bytes, int bytes_per_ins){
-  bool canPrint = blockIdx.x == 0 & threadIdx.x == 0;
+  //bool canPrint = blockIdx.x == 0 & threadIdx.x == 0;
 
   int num_kernels = blockDim.x * 256;
 
   int num_copies = (num_bytes + bytes_per_ins - 1) / bytes_per_ins;
   int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
 
-  if (canPrint){
+  if (blockIdx.x == 0 && threadIdx.x == 0){
     printf("Number of kernels %i\n", num_kernels);
     printf("Number of copies %i\n", num_copies);
     printf("Copies per kernel %i\n", copies_per_kernel);
