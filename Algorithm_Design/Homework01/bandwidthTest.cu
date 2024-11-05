@@ -123,7 +123,7 @@ void printResultsCSV(unsigned int *memSizes, double *bandwidths,
                      int iNumDevs, bool wc);
 void printHelp(void);
 
-__global__ void copyKernelel(const unsigned char* in, unsigned char* out, size_t num_bytes){
+__global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t num_bytes){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
 
   if (i < num_bytes){
