@@ -635,7 +635,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
   //checkCudaErrors(
   //    cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
   //);
-  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, memSize);
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize);
 
   // copy data from GPU to Host
   if (PINNED == memMode) {
@@ -645,7 +645,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
       //checkCudaErrors(
       //  cudaMemcpyAsync(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost, 0)
       //);
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, h_idata, memSize);
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, h_odata, memSize);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -763,7 +763,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       //checkCudaErrors(
       //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
       //);
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_odata, memSize);
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -854,12 +854,12 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   //);
   cudaError_t err = cudaSuccess;
 
-  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, memSize);
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize);
 
   err = cudaGetLastError();
 
   if (err != cudaSuccess) {
-    fprintf(stderr, "Failed to launch vectorAdd kernel (error code %s)!\n",
+    fprintf(stderr, "Failed to launch copyKernel (error code %s)!\n",
             cudaGetErrorString(err));
     exit(EXIT_FAILURE);
   }
@@ -872,12 +872,12 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
     //checkCudaErrors(
     //  cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
     //);
-    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_odata, d_idata, memSize);
+    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, d_odata, memSize);
 
     //err = cudaGetLastError();
 //
     //if (err != cudaSuccess) {
-    //  fprintf(stderr, "Failed to launch vectorAdd kernel (error code %s)!\n",
+    //  fprintf(stderr, "Failed to launch copyKernel (error code %s)!\n",
     //        cudaGetErrorString(err));
     //  exit(EXIT_FAILURE);
     //}
