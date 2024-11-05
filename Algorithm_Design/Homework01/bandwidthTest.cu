@@ -852,9 +852,17 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   //checkCudaErrors(
   //    cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
   //);
-  checkCudaErrors(
-    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements)
-  );
+  cudaError_t err = cudaSuccess;
+
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements)
+
+  err = cudaGetLastError();
+
+  if (err != cudaSuccess) {
+    fprintf(stderr, "Failed to launch vectorAdd kernel (error code %s)!\n",
+            cudaGetErrorString(err));
+    exit(EXIT_FAILURE);
+  }
 
   // run the memcopy
   sdkStartTimer(&timer);
@@ -864,9 +872,15 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
     //checkCudaErrors(
     //  cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
     //);
-    checkCudaErrors(
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_odata, d_idata, numElements);
-    );
+    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_odata, d_idata, numElements);
+
+    err = cudaGetLastError();
+
+    if (err != cudaSuccess) {
+      fprintf(stderr, "Failed to launch vectorAdd kernel (error code %s)!\n",
+            cudaGetErrorString(err));
+      exit(EXIT_FAILURE);
+    }
   }
 
   checkCudaErrors(cudaEventRecord(stop, 0));
