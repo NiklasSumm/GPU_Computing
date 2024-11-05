@@ -129,22 +129,20 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   int num_copies = ceil((float)num_bytes / (float)bytes_per_ins);
   int copies_per_kernel = ceil((float)num_copies / (float)num_kernels);
 
-  if (bytes_per_ins == 1){
+  if (bytes_per_ins == 4){
     const int* in_as_int = reinterpret_cast<const int*>(in);
     int* out_as_int = reinterpret_cast<int*>(out);
     for (int i = 0; i < copies_per_kernel; i++){
       int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
-      printf("Index: %i ", index);
-      printf("Copies per Kernel %i ", copies_per_kernel);
-      printf("Total copies: %i ", num_copies);
+      printf(" %d ", index)
+      printf(" %d ", copies_per_kernel)
       if (index < num_copies){
         out_as_int[index] = in_as_int[index];
       }
     }
-    printf("copy done");
   }
 
-  if (bytes_per_ins == 2){
+  if (bytes_per_ins == 8){
     const int2* in_as_int2 = reinterpret_cast<const int2*>(in);
     int2* out_as_int2 = reinterpret_cast<int2*>(out);
     for (int i = 0; i < copies_per_kernel; i++){
@@ -155,7 +153,7 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
     }
   }
 
-  if (bytes_per_ins == 4){
+  if (bytes_per_ins == 16){
     const int4* in_as_int4 = reinterpret_cast<const int4*>(in);
     int4* out_as_int4 = reinterpret_cast<int4*>(out);
     for (int i = 0; i < copies_per_kernel; i++){
@@ -680,7 +678,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
 
   cudaError_t err = cudaSuccess;
 
-  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 1);
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 4);
 
   err = cudaGetLastError();
 
@@ -698,7 +696,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
       //checkCudaErrors(
       //  cudaMemcpyAsync(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost, 0)
       //);
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, h_odata, memSize, 1);
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, h_odata, memSize, 4);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -816,7 +814,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       //checkCudaErrors(
       //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
       //);
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, 1);
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, 4);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -907,7 +905,7 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   //);
   cudaError_t err = cudaSuccess;
 
-  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 1);
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 4);
 
   err = cudaGetLastError();
 
@@ -925,7 +923,7 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
     //checkCudaErrors(
     //  cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
     //);
-    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, d_odata, memSize, 1);
+    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, d_odata, memSize, 4);
 
     //err = cudaGetLastError();
 //
