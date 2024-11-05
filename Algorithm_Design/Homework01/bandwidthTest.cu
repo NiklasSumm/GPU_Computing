@@ -854,7 +854,7 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   //);
   cudaError_t err = cudaSuccess;
 
-  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements)
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements);
 
   err = cudaGetLastError();
 
