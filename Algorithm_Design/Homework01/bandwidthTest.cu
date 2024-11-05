@@ -124,6 +124,7 @@ void printResultsCSV(unsigned int *memSizes, double *bandwidths,
 void printHelp(void);
 
 __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t num_bytes, int bytes_per_ins){
+  printf("Kernel started");
   int num_kernels = blockDim.x * 256;
 
   int num_copies = ceil((float)num_bytes / (float)bytes_per_ins);
