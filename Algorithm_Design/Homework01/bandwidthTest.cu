@@ -124,10 +124,12 @@ void printResultsCSV(unsigned int *memSizes, double *bandwidths,
 void printHelp(void);
 
 __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t num_bytes, int bytes_per_ins){
+  printf("Bytes per ins: %i ", bytes_per_ins);
   int num_kernels = blockDim.x * 256;
 
   int num_copies = ceil((float)num_bytes / (float)bytes_per_ins);
   int copies_per_kernel = ceil((float)num_copies / (float)num_kernels);
+  printf("Copies per kernel: %i ", copies_per_kernel);
 
   if (bytes_per_ins == 4){
     const int* in_as_int = reinterpret_cast<const int*>(in);
