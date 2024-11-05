@@ -134,9 +134,9 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
     int* out_as_int = reinterpret_cast<int*>(out);
     for (int i = 0; i < copies_per_kernel; i++){
       int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
-      printf(" %d ", index);
-      printf(" %d ", copies_per_kernel);
-      printf(" %d ", num_copies);
+      printf("Index: %i ", index);
+      printf("Copies per Kernel %i ", copies_per_kernel);
+      printf("Total copies: %i ", num_copies);
       if (index < num_copies){
         out_as_int[index] = in_as_int[index];
       }
