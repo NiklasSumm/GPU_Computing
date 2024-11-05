@@ -627,7 +627,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
 
   //Defining important variables for copyKernel
-  int numElements = memSize / sizeof(unsigned char)
+  int numElements = memSize / sizeof(unsigned char);
   int threadsPerBlock = 256;
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -635,7 +635,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
   //checkCudaErrors(
   //    cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
   //);
-  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements)
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements);
 
   // copy data from GPU to Host
   if (PINNED == memMode) {
@@ -645,7 +645,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
       //checkCudaErrors(
       //  cudaMemcpyAsync(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost, 0)
       //);
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, h_idata, numElements)
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, h_idata, numElements);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -662,7 +662,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
       checkCudaErrors(
           cudaMemcpy(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost)
       );
-      //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, h_idata, numElements)
+      //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, h_idata, numElements);
 
       sdkStopTimer(&timer);
       elapsedTimeInMs += sdkGetTimerValue(&timer);
@@ -751,7 +751,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
 
     //Defining important variables for copyKernel
-  int numElements = memSize / sizeof(unsigned char)
+  int numElements = memSize / sizeof(unsigned char);
   int threadsPerBlock = 256;
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -763,7 +763,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       //checkCudaErrors(
       //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
       //);
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_odata, numElements)
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_odata, numElements);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -780,7 +780,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       checkCudaErrors(
           cudaMemcpy(d_idata, h_odata, memSize, cudaMemcpyHostToDevice)
       );
-      //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_odata, numElements)
+      //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_odata, numElements);
 
       sdkStopTimer(&timer);
       elapsedTimeInMs += sdkGetTimerValue(&timer);
@@ -844,7 +844,7 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   checkCudaErrors(cudaMalloc((void **)&d_odata, memSize));
 
   //Defining important variables for copyKernel
-  int numElements = memSize / sizeof(unsigned char)
+  int numElements = memSize / sizeof(unsigned char);
   int threadsPerBlock = 256;
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -852,7 +852,7 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   //checkCudaErrors(
   //    cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
   //);
-  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements)
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements);
 
   // run the memcopy
   sdkStartTimer(&timer);
@@ -862,7 +862,7 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
     //checkCudaErrors(
     //  cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
     //);
-    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_odata, d_idata, numElements)
+    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_odata, d_idata, numElements);
   }
 
   checkCudaErrors(cudaEventRecord(stop, 0));
