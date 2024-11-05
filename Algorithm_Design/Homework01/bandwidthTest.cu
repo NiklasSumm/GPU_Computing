@@ -127,7 +127,7 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   bool canPrint = false;
   if (blockIdx.x == 0 && threadIdx.x == 0){
     canPrint = true;
-    printf("test1)
+    printf("test1");
   }
 
   if (canPrint){
