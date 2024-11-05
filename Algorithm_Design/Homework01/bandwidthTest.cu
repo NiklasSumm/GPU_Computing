@@ -124,7 +124,7 @@ void printResultsCSV(unsigned int *memSizes, double *bandwidths,
 void printHelp(void);
 
 __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t num_bytes, int bytes_per_ins){
-  bool canPrint = blockIdx.x == 0 & threadIdx.x == 0;
+  //bool canPrint = blockIdx.x == 0 & threadIdx.x == 0;
 
   int num_kernels = blockDim.x * 256;
 
