@@ -632,20 +632,20 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // initialize the device memory
-  checkCudaErrors(
-      //cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
-    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements)
-  );
+  //checkCudaErrors(
+  //    cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
+  //);
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements)
 
   // copy data from GPU to Host
   if (PINNED == memMode) {
     if (bDontUseGPUTiming) sdkStartTimer(&timer);
     checkCudaErrors(cudaEventRecord(start, 0));
     for (unsigned int i = 0; i < MEMCOPY_ITERATIONS; i++) {
-      checkCudaErrors(
-        //cudaMemcpyAsync(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost, 0)
-        copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, h_idata, numElements)
-      );
+      //checkCudaErrors(
+      //  cudaMemcpyAsync(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost, 0)
+      //);
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, h_idata, numElements)
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -661,8 +661,9 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
       sdkStartTimer(&timer);
       checkCudaErrors(
           cudaMemcpy(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost)
-          //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, h_idata, numElements)
       );
+      //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, h_idata, numElements)
+
       sdkStopTimer(&timer);
       elapsedTimeInMs += sdkGetTimerValue(&timer);
       sdkResetTimer(&timer);
@@ -759,10 +760,10 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
     if (bDontUseGPUTiming) sdkStartTimer(&timer);
     checkCudaErrors(cudaEventRecord(start, 0));
     for (unsigned int i = 0; i < MEMCOPY_ITERATIONS; i++) {
-      checkCudaErrors(
-        //cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
-        copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_odata, numElements)
-      );
+      //checkCudaErrors(
+      //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
+      //);
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_odata, numElements)
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -778,8 +779,9 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       sdkStartTimer(&timer);
       checkCudaErrors(
           cudaMemcpy(d_idata, h_odata, memSize, cudaMemcpyHostToDevice)
-          //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_odata, numElements)
       );
+      //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_odata, numElements)
+
       sdkStopTimer(&timer);
       elapsedTimeInMs += sdkGetTimerValue(&timer);
       sdkResetTimer(&timer);
@@ -847,20 +849,20 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // initialize memory
-  checkCudaErrors(
-      //cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements)
-  );
+  //checkCudaErrors(
+  //    cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
+  //);
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements)
 
   // run the memcopy
   sdkStartTimer(&timer);
   checkCudaErrors(cudaEventRecord(start, 0));
 
   for (unsigned int i = 0; i < MEMCOPY_ITERATIONS; i++) {
-    checkCudaErrors(
-        //cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
-        copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_odata, d_idata, numElements)
-      );
+    //checkCudaErrors(
+    //  cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
+    //);
+    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_odata, d_idata, numElements)
   }
 
   checkCudaErrors(cudaEventRecord(stop, 0));
