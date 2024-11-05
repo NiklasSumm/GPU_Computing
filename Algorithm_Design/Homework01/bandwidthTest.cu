@@ -139,23 +139,25 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
       }
     }
   }
+
   if (bytes_per_ins == 2){
-    const int2* in_as_int = reinterpret_cast<const int2*>(in);
-    int2* out_as_int = reinterpret_cast<int2*>(out);
+    const int2* in_as_int2 = reinterpret_cast<const int2*>(in);
+    int2* out_as_int2 = reinterpret_cast<int2*>(out);
     for (int i = 0; i < copies_per_kernel; i++){
       int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
       if (index < num_copies){
-        out_as_int[index] = in_as_int[index];
+        out_as_int2[index] = in_as_int2[index];
       }
     }
   }
+
   if (bytes_per_ins == 4){
-    const int4* in_as_int = reinterpret_cast<const int4*>(in);
-    int4* out_as_int = reinterpret_cast<int4*>(out);
+    const int4* in_as_int4 = reinterpret_cast<const int4*>(in);
+    int4* out_as_int4 = reinterpret_cast<int4*>(out);
     for (int i = 0; i < copies_per_kernel; i++){
       int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
       if (index < num_copies){
-        out_as_int[index] = in_as_int[index];
+        out_as_int4[index] = in_as_int4[index];
       }
     }
   }
@@ -671,7 +673,18 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
   //checkCudaErrors(
   //    cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
   //);
+
+  cudaError_t err = cudaSuccess;
+
   copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 1);
+
+  err = cudaGetLastError();
+
+  if (err != cudaSuccess) {
+    fprintf(stderr, "Failed to launch copyKernel (error code %s)!\n",
+            cudaGetErrorString(err));
+    exit(EXIT_FAILURE);
+  }
 
   // copy data from GPU to Host
   if (PINNED == memMode) {
