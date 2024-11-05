@@ -852,7 +852,9 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   //checkCudaErrors(
   //    cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
   //);
-  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements);
+  checkCudaErrors(
+    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_idata, numElements)
+  );
 
   // run the memcopy
   sdkStartTimer(&timer);
@@ -862,7 +864,9 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
     //checkCudaErrors(
     //  cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
     //);
-    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_odata, d_idata, numElements);
+    checkCudaErrors(
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_odata, d_idata, numElements);
+    );
   }
 
   checkCudaErrors(cudaEventRecord(stop, 0));
