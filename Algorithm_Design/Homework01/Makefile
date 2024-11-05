@@ -1,358 +1,1062 @@
-################################################################################
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#  * Neither the name of NVIDIA CORPORATION nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-# OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-################################################################################
-#
-# Makefile project only supported on Mac OS X and Linux Platforms)
-#
-################################################################################
+/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *  * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *  * Neither the name of NVIDIA CORPORATION nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
-# Location of the CUDA Toolkit
-CUDA_PATH ?= /usr/local/cuda
+/*
+ * This is a simple test program to measure the memcopy bandwidth of the GPU.
+ * It can measure device to device copy bandwidth, host to device copy bandwidth
+ * for pageable and pinned memory, and device to host copy bandwidth for
+ * pageable and pinned memory.
+ *
+ * Usage:
+ * ./bandwidthTest [option]...
+ */
 
-##############################
-# start deprecated interface #
-##############################
-ifeq ($(x86_64),1)
-    $(info WARNING - x86_64 variable has been deprecated)
-    $(info WARNING - please use TARGET_ARCH=x86_64 instead)
-    TARGET_ARCH ?= x86_64
-endif
-ifeq ($(ARMv7),1)
-    $(info WARNING - ARMv7 variable has been deprecated)
-    $(info WARNING - please use TARGET_ARCH=armv7l instead)
-    TARGET_ARCH ?= armv7l
-endif
-ifeq ($(aarch64),1)
-    $(info WARNING - aarch64 variable has been deprecated)
-    $(info WARNING - please use TARGET_ARCH=aarch64 instead)
-    TARGET_ARCH ?= aarch64
-endif
-ifeq ($(ppc64le),1)
-    $(info WARNING - ppc64le variable has been deprecated)
-    $(info WARNING - please use TARGET_ARCH=ppc64le instead)
-    TARGET_ARCH ?= ppc64le
-endif
-ifneq ($(GCC),)
-    $(info WARNING - GCC variable has been deprecated)
-    $(info WARNING - please use HOST_COMPILER=$(GCC) instead)
-    HOST_COMPILER ?= $(GCC)
-endif
-ifneq ($(abi),)
-    $(error ERROR - abi variable has been removed)
-endif
-############################
-# end deprecated interface #
-############################
+// CUDA runtime
+#include <cuda_runtime.h>
 
-# architecture
-HOST_ARCH   := $(shell uname -m)
-TARGET_ARCH ?= $(HOST_ARCH)
-ifneq (,$(filter $(TARGET_ARCH),x86_64 aarch64 sbsa ppc64le armv7l))
-    ifneq ($(TARGET_ARCH),$(HOST_ARCH))
-        ifneq (,$(filter $(TARGET_ARCH),x86_64 aarch64 sbsa ppc64le))
-            TARGET_SIZE := 64
-        else ifneq (,$(filter $(TARGET_ARCH),armv7l))
-            TARGET_SIZE := 32
-        endif
-    else
-        TARGET_SIZE := $(shell getconf LONG_BIT)
-    endif
-else
-    $(error ERROR - unsupported value $(TARGET_ARCH) for TARGET_ARCH!)
-endif
+// includes
+#include <helper_cuda.h>  // helper functions for CUDA error checking and initialization
+#include <helper_functions.h>  // helper for shared functions common to CUDA Samples
 
-# sbsa and aarch64 systems look similar. Need to differentiate them at host level for now.
-ifeq ($(HOST_ARCH),aarch64)
-    ifeq ($(CUDA_PATH)/targets/sbsa-linux,$(shell ls -1d $(CUDA_PATH)/targets/sbsa-linux 2>/dev/null))
-        HOST_ARCH := sbsa
-        TARGET_ARCH := sbsa
-    endif
-endif
+#include <cuda.h>
 
-ifneq ($(TARGET_ARCH),$(HOST_ARCH))
-    ifeq (,$(filter $(HOST_ARCH)-$(TARGET_ARCH),aarch64-armv7l x86_64-armv7l x86_64-aarch64 x86_64-sbsa x86_64-ppc64le))
-        $(error ERROR - cross compiling from $(HOST_ARCH) to $(TARGET_ARCH) is not supported!)
-    endif
-endif
+#include <cassert>
+#include <iostream>
+#include <memory>
 
-# When on native aarch64 system with userspace of 32-bit, change TARGET_ARCH to armv7l
-ifeq ($(HOST_ARCH)-$(TARGET_ARCH)-$(TARGET_SIZE),aarch64-aarch64-32)
-    TARGET_ARCH = armv7l
-endif
+static const char *sSDKsample = "CUDA Bandwidth Test";
 
-# operating system
-HOST_OS   := $(shell uname -s 2>/dev/null | tr "[:upper:]" "[:lower:]")
-TARGET_OS ?= $(HOST_OS)
-ifeq (,$(filter $(TARGET_OS),linux darwin qnx android))
-    $(error ERROR - unsupported value $(TARGET_OS) for TARGET_OS!)
-endif
+// defines, project
+#define MEMCOPY_ITERATIONS 100
+#define DEFAULT_SIZE (32 * (1e6))      // 32 M
+#define DEFAULT_INCREMENT (4 * (1e6))  // 4 M
+#define CACHE_CLEAR_SIZE (16 * (1e6))  // 16 M
 
-# host compiler
-ifdef HOST_COMPILER
- CUSTOM_HOST_COMPILER = 1
-endif
+// shmoo mode defines
+#define SHMOO_MEMSIZE_MAX (64 * (1e6))       // 64 M
+#define SHMOO_MEMSIZE_START (1e3)            // 1 KB
+#define SHMOO_INCREMENT_1KB (1e3)            // 1 KB
+#define SHMOO_INCREMENT_2KB (2 * 1e3)        // 2 KB
+#define SHMOO_INCREMENT_10KB (10 * (1e3))    // 10KB
+#define SHMOO_INCREMENT_100KB (100 * (1e3))  // 100 KB
+#define SHMOO_INCREMENT_1MB (1e6)            // 1 MB
+#define SHMOO_INCREMENT_2MB (2 * 1e6)        // 2 MB
+#define SHMOO_INCREMENT_4MB (4 * 1e6)        // 4 MB
+#define SHMOO_LIMIT_20KB (20 * (1e3))        // 20 KB
+#define SHMOO_LIMIT_50KB (50 * (1e3))        // 50 KB
+#define SHMOO_LIMIT_100KB (100 * (1e3))      // 100 KB
+#define SHMOO_LIMIT_1MB (1e6)                // 1 MB
+#define SHMOO_LIMIT_16MB (16 * 1e6)          // 16 MB
+#define SHMOO_LIMIT_32MB (32 * 1e6)          // 32 MB
 
-ifeq ($(TARGET_OS),darwin)
-    ifeq ($(shell expr `xcodebuild -version | grep -i xcode | awk '{print $$2}' | cut -d'.' -f1` \>= 5),1)
-        HOST_COMPILER ?= clang++
-    endif
-else ifneq ($(TARGET_ARCH),$(HOST_ARCH))
-    ifeq ($(HOST_ARCH)-$(TARGET_ARCH),x86_64-armv7l)
-        ifeq ($(TARGET_OS),linux)
-            HOST_COMPILER ?= arm-linux-gnueabihf-g++
-        else ifeq ($(TARGET_OS),qnx)
-            ifeq ($(QNX_HOST),)
-                $(error ERROR - QNX_HOST must be passed to the QNX host toolchain)
-            endif
-            ifeq ($(QNX_TARGET),)
-                $(error ERROR - QNX_TARGET must be passed to the QNX target toolchain)
-            endif
-            export QNX_HOST
-            export QNX_TARGET
-            HOST_COMPILER ?= $(QNX_HOST)/usr/bin/arm-unknown-nto-qnx6.6.0eabi-g++
-        else ifeq ($(TARGET_OS),android)
-            HOST_COMPILER ?= arm-linux-androideabi-g++
-        endif
-    else ifeq ($(TARGET_ARCH),aarch64)
-        ifeq ($(TARGET_OS), linux)
-            HOST_COMPILER ?= aarch64-linux-gnu-g++
-        else ifeq ($(TARGET_OS),qnx)
-            ifeq ($(QNX_HOST),)
-                $(error ERROR - QNX_HOST must be passed to the QNX host toolchain)
-            endif
-            ifeq ($(QNX_TARGET),)
-                $(error ERROR - QNX_TARGET must be passed to the QNX target toolchain)
-            endif
-            export QNX_HOST
-            export QNX_TARGET
-            HOST_COMPILER ?= $(QNX_HOST)/usr/bin/q++
-        else ifeq ($(TARGET_OS), android)
-            HOST_COMPILER ?= aarch64-linux-android-clang++
-        endif
-    else ifeq ($(TARGET_ARCH),sbsa)
-        HOST_COMPILER ?= aarch64-linux-gnu-g++
-    else ifeq ($(TARGET_ARCH),ppc64le)
-        HOST_COMPILER ?= powerpc64le-linux-gnu-g++
-    endif
-endif
-HOST_COMPILER ?= g++
-NVCC          := $(CUDA_PATH)/bin/nvcc -ccbin $(HOST_COMPILER)
+// CPU cache flush
+#define FLUSH_SIZE (256 * 1024 * 1024)
+char *flush_buf;
 
-# internal flags
-NVCCFLAGS   := -m${TARGET_SIZE}
-CCFLAGS     :=
-LDFLAGS     :=
+// enums, project
+enum testMode { QUICK_MODE, RANGE_MODE, SHMOO_MODE };
+enum memcpyKind { DEVICE_TO_HOST, HOST_TO_DEVICE, DEVICE_TO_DEVICE };
+enum printMode { USER_READABLE, CSV };
+enum memoryMode { PINNED, PAGEABLE };
 
-# build flags
+const char *sMemoryCopyKind[] = {"Device to Host", "Host to Device",
+                                 "Device to Device", NULL};
 
-# Link flag for customized HOST_COMPILER with gcc realpath
-GCC_PATH := $(shell which gcc)
-ifeq ($(CUSTOM_HOST_COMPILER),1)
-    ifneq ($(filter /%,$(HOST_COMPILER)),)
-        ifneq ($(findstring gcc,$(HOST_COMPILER)),)
-            ifneq ($(GCC_PATH),$(HOST_COMPILER))
-                LDFLAGS += -lstdc++
-            endif
-        endif
-    endif
-endif
+const char *sMemoryMode[] = {"PINNED", "PAGEABLE", NULL};
 
-ifeq ($(TARGET_OS),darwin)
-    LDFLAGS += -rpath $(CUDA_PATH)/lib
-    CCFLAGS += -arch $(HOST_ARCH)
-else ifeq ($(HOST_ARCH)-$(TARGET_ARCH)-$(TARGET_OS),x86_64-armv7l-linux)
-    LDFLAGS += --dynamic-linker=/lib/ld-linux-armhf.so.3
-    CCFLAGS += -mfloat-abi=hard
-else ifeq ($(TARGET_OS),android)
-    LDFLAGS += -pie
-    CCFLAGS += -fpie -fpic -fexceptions
-endif
+// if true, use CPU based timing for everything
+static bool bDontUseGPUTiming;
 
-ifneq ($(TARGET_ARCH),$(HOST_ARCH))
-    ifeq ($(TARGET_ARCH)-$(TARGET_OS),armv7l-linux)
-        ifneq ($(TARGET_FS),)
-            GCCVERSIONLTEQ46 := $(shell expr `$(HOST_COMPILER) -dumpversion` \<= 4.6)
-            ifeq ($(GCCVERSIONLTEQ46),1)
-                CCFLAGS += --sysroot=$(TARGET_FS)
-            endif
-            LDFLAGS += --sysroot=$(TARGET_FS)
-            LDFLAGS += -rpath-link=$(TARGET_FS)/lib
-            LDFLAGS += -rpath-link=$(TARGET_FS)/usr/lib
-            LDFLAGS += -rpath-link=$(TARGET_FS)/usr/lib/arm-linux-gnueabihf
-        endif
-    endif
-    ifeq ($(TARGET_ARCH)-$(TARGET_OS),aarch64-linux)
-        ifneq ($(TARGET_FS),)
-            GCCVERSIONLTEQ46 := $(shell expr `$(HOST_COMPILER) -dumpversion` \<= 4.6)
-            ifeq ($(GCCVERSIONLTEQ46),1)
-                CCFLAGS += --sysroot=$(TARGET_FS)
-            endif
-            LDFLAGS += --sysroot=$(TARGET_FS)
-            LDFLAGS += -rpath-link=$(TARGET_FS)/lib -L$(TARGET_FS)/lib
-            LDFLAGS += -rpath-link=$(TARGET_FS)/lib/aarch64-linux-gnu -L$(TARGET_FS)/lib/aarch64-linux-gnu
-            LDFLAGS += -rpath-link=$(TARGET_FS)/usr/lib -L$(TARGET_FS)/usr/lib
-            LDFLAGS += -rpath-link=$(TARGET_FS)/usr/lib/aarch64-linux-gnu -L$(TARGET_FS)/usr/lib/aarch64-linux-gnu
-            LDFLAGS += --unresolved-symbols=ignore-in-shared-libs
-            CCFLAGS += -isystem=$(TARGET_FS)/usr/include -I$(TARGET_FS)/usr/include -I$(TARGET_FS)/usr/include/libdrm
-            CCFLAGS += -isystem=$(TARGET_FS)/usr/include/aarch64-linux-gnu -I$(TARGET_FS)/usr/include/aarch64-linux-gnu
-        endif
-    endif
-    ifeq ($(TARGET_ARCH)-$(TARGET_OS),aarch64-qnx)
-        NVCCFLAGS += -D_QNX_SOURCE
-        NVCCFLAGS += --qpp-config 8.3.0,gcc_ntoaarch64le
-        CCFLAGS += -DWIN_INTERFACE_CUSTOM -I/usr/include/aarch64-qnx-gnu
-        LDFLAGS += -lsocket
-        LDFLAGS += -L/usr/lib/aarch64-qnx-gnu
-        CCFLAGS += "-Wl\,-rpath-link\,/usr/lib/aarch64-qnx-gnu"
-        ifdef TARGET_OVERRIDE
-            LDFLAGS += -lslog2
-        endif
+int *pArgc = NULL;
+char **pArgv = NULL;
 
-        ifneq ($(TARGET_FS),)
-            LDFLAGS += -L$(TARGET_FS)/usr/lib
-            CCFLAGS += "-Wl\,-rpath-link\,$(TARGET_FS)/usr/lib"
-            LDFLAGS += -L$(TARGET_FS)/usr/libnvidia
-            CCFLAGS += "-Wl\,-rpath-link\,$(TARGET_FS)/usr/libnvidia"
-            CCFLAGS += -I$(TARGET_FS)/../include
-        endif
-    endif
-endif
+////////////////////////////////////////////////////////////////////////////////
+// declaration, forward
+int runTest(const int argc, const char **argv);
+void testBandwidth(unsigned int start, unsigned int end, unsigned int increment,
+                   testMode mode, memcpyKind kind, printMode printmode,
+                   memoryMode memMode, int startDevice, int endDevice, bool wc);
+void testBandwidthQuick(unsigned int size, memcpyKind kind, printMode printmode,
+                        memoryMode memMode, int startDevice, int endDevice,
+                        bool wc);
+void testBandwidthRange(unsigned int start, unsigned int end,
+                        unsigned int increment, memcpyKind kind,
+                        printMode printmode, memoryMode memMode,
+                        int startDevice, int endDevice, bool wc);
+void testBandwidthShmoo(memcpyKind kind, printMode printmode,
+                        memoryMode memMode, int startDevice, int endDevice,
+                        bool wc);
+float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
+                               bool wc);
+float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
+                               bool wc);
+float testDeviceToDeviceTransfer(unsigned int memSize);
+void printResultsReadable(unsigned int *memSizes, double *bandwidths,
+                          unsigned int count, memcpyKind kind,
+                          memoryMode memMode, int iNumDevs, bool wc);
+void printResultsCSV(unsigned int *memSizes, double *bandwidths,
+                     unsigned int count, memcpyKind kind, memoryMode memMode,
+                     int iNumDevs, bool wc);
+void printHelp(void);
 
-ifdef TARGET_OVERRIDE # cuda toolkit targets override
-    NVCCFLAGS += -target-dir $(TARGET_OVERRIDE)
-endif
+__global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t num_bytes, int bytes_per_ins){
+  int num_kernels = blockDim.x * 256;
 
-# Install directory of different arch
-CUDA_INSTALL_TARGET_DIR :=
-ifeq ($(TARGET_ARCH)-$(TARGET_OS),armv7l-linux)
-    CUDA_INSTALL_TARGET_DIR = targets/armv7-linux-gnueabihf/
-else ifeq ($(TARGET_ARCH)-$(TARGET_OS),aarch64-linux)
-    CUDA_INSTALL_TARGET_DIR = targets/aarch64-linux/
-else ifeq ($(TARGET_ARCH)-$(TARGET_OS),sbsa-linux)
-    CUDA_INSTALL_TARGET_DIR = targets/sbsa-linux/
-else ifeq ($(TARGET_ARCH)-$(TARGET_OS),armv7l-android)
-    CUDA_INSTALL_TARGET_DIR = targets/armv7-linux-androideabi/
-else ifeq ($(TARGET_ARCH)-$(TARGET_OS),aarch64-android)
-    CUDA_INSTALL_TARGET_DIR = targets/aarch64-linux-androideabi/
-else ifeq ($(TARGET_ARCH)-$(TARGET_OS),armv7l-qnx)
-    CUDA_INSTALL_TARGET_DIR = targets/ARMv7-linux-QNX/
-else ifeq ($(TARGET_ARCH)-$(TARGET_OS),aarch64-qnx)
-    CUDA_INSTALL_TARGET_DIR = targets/aarch64-qnx/
-else ifeq ($(TARGET_ARCH),ppc64le)
-    CUDA_INSTALL_TARGET_DIR = targets/ppc64le-linux/
-endif
+  int num_copies = ceil((float)num_bytes / (float)bytes_per_ins);
+  int copies_per_kernel = ceil((float)num_copies / (float)num_kernels);
 
-# Debug build flags
-ifeq ($(dbg),1)
-      NVCCFLAGS += -g -G
-      BUILD_TYPE := debug
-else
-      BUILD_TYPE := release
-endif
+  if (bytes_per_ins == 1){
+    int* in_as_int = reinterpret_cast<int>(in);
+    int* out_as_int = reinterpret_cast<int>(out);
+    for (int i = 0; i < copies_per_kernel; i++){
+      int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+      if (index < num_copies){
+        out_as_int[index] = in_as_int[index];
+      }
+    }
+  }
+  if (bytes_per_ins == 2){
+    int2* in_as_int = reinterpret_cast<int2>(in);
+    int2* out_as_int = reinterpret_cast<int2>(out);
+    for (int i = 0; i < copies_per_kernel; i++){
+      int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+      if (index < num_copies){
+        out_as_int[index] = in_as_int[index];
+      }
+    }
+  }
+  if (bytes_per_ins == 4){
+    int4* in_as_int = reinterpret_cast<int4>(in);
+    int4* out_as_int = reinterpret_cast<int4>(out);
+    for (int i = 0; i < copies_per_kernel; i++){
+      int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+      if (index < num_copies){
+        out_as_int[index] = in_as_int[index];
+      }
+    }
+  }
 
-ALL_CCFLAGS :=
-ALL_CCFLAGS += $(NVCCFLAGS)
-ALL_CCFLAGS += $(EXTRA_NVCCFLAGS)
-ALL_CCFLAGS += $(addprefix -Xcompiler ,$(CCFLAGS))
-ALL_CCFLAGS += $(addprefix -Xcompiler ,$(EXTRA_CCFLAGS))
+  //int i = blockDim.x * blockIdx.x + threadIdx.x;
+//
+  //if (i < num_bytes){
+  //  out[i] = in[i];
+  //}
+}
 
-SAMPLE_ENABLED := 1
+////////////////////////////////////////////////////////////////////////////////
+// Program main
+////////////////////////////////////////////////////////////////////////////////
+int main(int argc, char **argv) {
+  pArgc = &argc;
+  pArgv = argv;
 
-ALL_LDFLAGS :=
-ALL_LDFLAGS += $(ALL_CCFLAGS)
-ALL_LDFLAGS += $(addprefix -Xlinker ,$(LDFLAGS))
-ALL_LDFLAGS += $(addprefix -Xlinker ,$(EXTRA_LDFLAGS))
+  flush_buf = (char *)malloc(FLUSH_SIZE);
 
-# Common includes and paths for CUDA
-INCLUDES  := -I../Header_Files
-#-I../../../Common
-LIBRARIES :=
+  // set logfile name and start logs
+  printf("[%s] - Starting...\n", sSDKsample);
 
-################################################################################
+  int iRetVal = runTest(argc, (const char **)argv);
 
-# Gencode arguments
-ifeq ($(TARGET_ARCH),$(filter $(TARGET_ARCH),armv7l aarch64 sbsa))
-SMS ?= 53 61 70 72 75 80 86 87 90
-else
-SMS ?= 50 52 60 61 70 75 80 86 89 90
-endif
+  if (iRetVal < 0) {
+    checkCudaErrors(cudaSetDevice(0));
+  }
 
-ifeq ($(SMS),)
-$(info >>> WARNING - no SM architectures have been specified - waiving sample <<<)
-SAMPLE_ENABLED := 0
-endif
+  // finish
+  printf("%s\n", (iRetVal == 0) ? "Result = PASS" : "Result = FAIL");
 
-ifeq ($(GENCODE_FLAGS),)
-# Generate SASS code for each SM architecture listed in $(SMS)
-$(foreach sm,$(SMS),$(eval GENCODE_FLAGS += -gencode arch=compute_$(sm),code=sm_$(sm)))
+  printf(
+      "\nNOTE: The CUDA Samples are not meant for performance measurements. "
+      "Results may vary when GPU Boost is enabled.\n");
 
-# Generate PTX code from the highest SM architecture in $(SMS) to guarantee forward-compatibility
-HIGHEST_SM := $(lastword $(sort $(SMS)))
-ifneq ($(HIGHEST_SM),)
-GENCODE_FLAGS += -gencode arch=compute_$(HIGHEST_SM),code=compute_$(HIGHEST_SM)
-endif
-endif
+  free(flush_buf);
 
-ALL_CCFLAGS += --threads 0 --std=c++11
+  exit((iRetVal == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+}
 
-ifeq ($(SAMPLE_ENABLED),0)
-EXEC ?= @echo "[@]"
-endif
+///////////////////////////////////////////////////////////////////////////////
+// Parse args, run the appropriate tests
+///////////////////////////////////////////////////////////////////////////////
+int runTest(const int argc, const char **argv) {
+  int start = DEFAULT_SIZE;
+  int end = DEFAULT_SIZE;
+  int startDevice = 0;
+  int endDevice = 0;
+  int increment = DEFAULT_INCREMENT;
+  testMode mode = QUICK_MODE;
+  bool htod = false;
+  bool dtoh = false;
+  bool dtod = false;
+  bool wc = false;
+  char *modeStr;
+  char *device = NULL;
+  printMode printmode = USER_READABLE;
+  char *memModeStr = NULL;
+  memoryMode memMode = PINNED;
 
-################################################################################
+  // process command line args
+  if (checkCmdLineFlag(argc, argv, "help")) {
+    printHelp();
+    return 0;
+  }
 
-# Target rules
-all: build
+  if (checkCmdLineFlag(argc, argv, "csv")) {
+    printmode = CSV;
+  }
 
-build: bandwidthTest
+  if (getCmdLineArgumentString(argc, argv, "memory", &memModeStr)) {
+    if (strcmp(memModeStr, "pageable") == 0) {
+      memMode = PAGEABLE;
+    } else if (strcmp(memModeStr, "pinned") == 0) {
+      memMode = PINNED;
+    } else {
+      printf("Invalid memory mode - valid modes are pageable or pinned\n");
+      printf("See --help for more information\n");
+      return -1000;
+    }
+  } else {
+    // default - pinned memory
+    memMode = PINNED;
+  }
 
-check.deps:
-ifeq ($(SAMPLE_ENABLED),0)
-	@echo "Sample will be waived due to the above missing dependencies"
-else
-	@echo "Sample is ready - all dependencies have been met"
-endif
+  if (getCmdLineArgumentString(argc, argv, "device", &device)) {
+    int deviceCount;
+    cudaError_t error_id = cudaGetDeviceCount(&deviceCount);
 
-bandwidthTest.o:bandwidthTest.cu
-	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+    if (error_id != cudaSuccess) {
+      printf("cudaGetDeviceCount returned %d\n-> %s\n", (int)error_id,
+             cudaGetErrorString(error_id));
+      exit(EXIT_FAILURE);
+    }
 
-bandwidthTest: bandwidthTest.o
-	$(EXEC) $(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
-	$(EXEC) mkdir -p ../../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
-	$(EXEC) cp $@ ../../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
+    if (deviceCount == 0) {
+      printf("!!!!!No devices found!!!!!\n");
+      return -2000;
+    }
 
-run: build
-	$(EXEC) ./bandwidthTest
+    if (strcmp(device, "all") == 0) {
+      printf(
+          "\n!!!!!Cumulative Bandwidth to be computed from all the devices "
+          "!!!!!!\n\n");
+      startDevice = 0;
+      endDevice = deviceCount - 1;
+    } else {
+      startDevice = endDevice = atoi(device);
 
-testrun: build
+      if (startDevice >= deviceCount || startDevice < 0) {
+        printf(
+            "\n!!!!!Invalid GPU number %d given hence default gpu %d will be "
+            "used !!!!!\n",
+            startDevice, 0);
+        startDevice = endDevice = 0;
+      }
+    }
+  }
 
-clean:
-	rm -f bandwidthTest bandwidthTest.o
-	rm -rf ../../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/bandwidthTest
+  printf("Running on...\n\n");
 
-clobber: clean
+  for (int currentDevice = startDevice; currentDevice <= endDevice;
+       currentDevice++) {
+    cudaDeviceProp deviceProp;
+    cudaError_t error_id = cudaGetDeviceProperties(&deviceProp, currentDevice);
+
+    if (error_id == cudaSuccess) {
+      printf(" Device %d: %s\n", currentDevice, deviceProp.name);
+
+      if (deviceProp.computeMode == cudaComputeModeProhibited) {
+        fprintf(stderr,
+                "Error: device is running in <Compute Mode Prohibited>, no "
+                "threads can use ::cudaSetDevice().\n");
+        checkCudaErrors(cudaSetDevice(currentDevice));
+
+        exit(EXIT_FAILURE);
+      }
+    } else {
+      printf("cudaGetDeviceProperties returned %d\n-> %s\n", (int)error_id,
+             cudaGetErrorString(error_id));
+      checkCudaErrors(cudaSetDevice(currentDevice));
+
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  if (getCmdLineArgumentString(argc, argv, "mode", &modeStr)) {
+    // figure out the mode
+    if (strcmp(modeStr, "quick") == 0) {
+      printf(" Quick Mode\n\n");
+      mode = QUICK_MODE;
+    } else if (strcmp(modeStr, "shmoo") == 0) {
+      printf(" Shmoo Mode\n\n");
+      mode = SHMOO_MODE;
+    } else if (strcmp(modeStr, "range") == 0) {
+      printf(" Range Mode\n\n");
+      mode = RANGE_MODE;
+    } else {
+      printf("Invalid mode - valid modes are quick, range, or shmoo\n");
+      printf("See --help for more information\n");
+      return -3000;
+    }
+  } else {
+    // default mode - quick
+    printf(" Quick Mode\n\n");
+    mode = QUICK_MODE;
+  }
+
+  if (checkCmdLineFlag(argc, argv, "htod")) {
+    htod = true;
+  }
+
+  if (checkCmdLineFlag(argc, argv, "dtoh")) {
+    dtoh = true;
+  }
+
+  if (checkCmdLineFlag(argc, argv, "dtod")) {
+    dtod = true;
+  }
+
+#if CUDART_VERSION >= 2020
+
+  if (checkCmdLineFlag(argc, argv, "wc")) {
+    wc = true;
+  }
+
+#endif
+
+  if (checkCmdLineFlag(argc, argv, "cputiming")) {
+    bDontUseGPUTiming = true;
+  }
+
+  if (!htod && !dtoh && !dtod) {
+    // default:  All
+    htod = true;
+    dtoh = true;
+    dtod = true;
+  }
+
+  if (RANGE_MODE == mode) {
+    if (checkCmdLineFlag(argc, (const char **)argv, "start")) {
+      start = getCmdLineArgumentInt(argc, argv, "start");
+
+      if (start <= 0) {
+        printf("Illegal argument - start must be greater than zero\n");
+        return -4000;
+      }
+    } else {
+      printf("Must specify a starting size in range mode\n");
+      printf("See --help for more information\n");
+      return -5000;
+    }
+
+    if (checkCmdLineFlag(argc, (const char **)argv, "end")) {
+      end = getCmdLineArgumentInt(argc, argv, "end");
+
+      if (end <= 0) {
+        printf("Illegal argument - end must be greater than zero\n");
+        return -6000;
+      }
+
+      if (start > end) {
+        printf("Illegal argument - start is greater than end\n");
+        return -7000;
+      }
+    } else {
+      printf("Must specify an end size in range mode.\n");
+      printf("See --help for more information\n");
+      return -8000;
+    }
+
+    if (checkCmdLineFlag(argc, argv, "increment")) {
+      increment = getCmdLineArgumentInt(argc, argv, "increment");
+
+      if (increment <= 0) {
+        printf("Illegal argument - increment must be greater than zero\n");
+        return -9000;
+      }
+    } else {
+      printf("Must specify an increment in user mode\n");
+      printf("See --help for more information\n");
+      return -10000;
+    }
+  }
+
+  if (htod) {
+    testBandwidth((unsigned int)start, (unsigned int)end,
+                  (unsigned int)increment, mode, HOST_TO_DEVICE, printmode,
+                  memMode, startDevice, endDevice, wc);
+  }
+
+  if (dtoh) {
+    testBandwidth((unsigned int)start, (unsigned int)end,
+                  (unsigned int)increment, mode, DEVICE_TO_HOST, printmode,
+                  memMode, startDevice, endDevice, wc);
+  }
+
+  if (dtod) {
+    testBandwidth((unsigned int)start, (unsigned int)end,
+                  (unsigned int)increment, mode, DEVICE_TO_DEVICE, printmode,
+                  memMode, startDevice, endDevice, wc);
+  }
+
+  // Ensure that we reset all CUDA Devices in question
+  for (int nDevice = startDevice; nDevice <= endDevice; nDevice++) {
+    cudaSetDevice(nDevice);
+  }
+
+  return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//  Run a bandwidth test
+///////////////////////////////////////////////////////////////////////////////
+void testBandwidth(unsigned int start, unsigned int end, unsigned int increment,
+                   testMode mode, memcpyKind kind, printMode printmode,
+                   memoryMode memMode, int startDevice, int endDevice,
+                   bool wc) {
+  switch (mode) {
+    case QUICK_MODE:
+      testBandwidthQuick(DEFAULT_SIZE, kind, printmode, memMode, startDevice,
+                         endDevice, wc);
+      break;
+
+    case RANGE_MODE:
+      testBandwidthRange(start, end, increment, kind, printmode, memMode,
+                         startDevice, endDevice, wc);
+      break;
+
+    case SHMOO_MODE:
+      testBandwidthShmoo(kind, printmode, memMode, startDevice, endDevice, wc);
+      break;
+
+    default:
+      break;
+  }
+}
+
+//////////////////////////////////////////////////////////////////////
+//  Run a quick mode bandwidth test
+//////////////////////////////////////////////////////////////////////
+void testBandwidthQuick(unsigned int size, memcpyKind kind, printMode printmode,
+                        memoryMode memMode, int startDevice, int endDevice,
+                        bool wc) {
+  testBandwidthRange(size, size, DEFAULT_INCREMENT, kind, printmode, memMode,
+                     startDevice, endDevice, wc);
+}
+
+///////////////////////////////////////////////////////////////////////
+//  Run a range mode bandwidth test
+//////////////////////////////////////////////////////////////////////
+void testBandwidthRange(unsigned int start, unsigned int end,
+                        unsigned int increment, memcpyKind kind,
+                        printMode printmode, memoryMode memMode,
+                        int startDevice, int endDevice, bool wc) {
+  // count the number of copies we're going to run
+  unsigned int count = 1 + ((end - start) / increment);
+
+  unsigned int *memSizes = (unsigned int *)malloc(count * sizeof(unsigned int));
+  double *bandwidths = (double *)malloc(count * sizeof(double));
+
+  // Before calculating the cumulative bandwidth, initialize bandwidths array to
+  // NULL
+  for (unsigned int i = 0; i < count; i++) {
+    bandwidths[i] = 0.0;
+  }
+
+  // Use the device asked by the user
+  for (int currentDevice = startDevice; currentDevice <= endDevice;
+       currentDevice++) {
+    cudaSetDevice(currentDevice);
+
+    // run each of the copies
+    for (unsigned int i = 0; i < count; i++) {
+      memSizes[i] = start + i * increment;
+
+      switch (kind) {
+        case DEVICE_TO_HOST:
+          bandwidths[i] += testDeviceToHostTransfer(memSizes[i], memMode, wc);
+          break;
+
+        case HOST_TO_DEVICE:
+          bandwidths[i] += testHostToDeviceTransfer(memSizes[i], memMode, wc);
+          break;
+
+        case DEVICE_TO_DEVICE:
+          bandwidths[i] += testDeviceToDeviceTransfer(memSizes[i]);
+          break;
+      }
+    }
+  }  // Complete the bandwidth computation on all the devices
+
+  // print results
+  if (printmode == CSV) {
+    printResultsCSV(memSizes, bandwidths, count, kind, memMode,
+                    (1 + endDevice - startDevice), wc);
+  } else {
+    printResultsReadable(memSizes, bandwidths, count, kind, memMode,
+                         (1 + endDevice - startDevice), wc);
+  }
+
+  // clean up
+  free(memSizes);
+  free(bandwidths);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Intense shmoo mode - covers a large range of values with varying increments
+//////////////////////////////////////////////////////////////////////////////
+void testBandwidthShmoo(memcpyKind kind, printMode printmode,
+                        memoryMode memMode, int startDevice, int endDevice,
+                        bool wc) {
+  // count the number of copies to make
+  unsigned int count =
+      1 + (SHMOO_LIMIT_20KB / SHMOO_INCREMENT_1KB) +
+      ((SHMOO_LIMIT_50KB - SHMOO_LIMIT_20KB) / SHMOO_INCREMENT_2KB) +
+      ((SHMOO_LIMIT_100KB - SHMOO_LIMIT_50KB) / SHMOO_INCREMENT_10KB) +
+      ((SHMOO_LIMIT_1MB - SHMOO_LIMIT_100KB) / SHMOO_INCREMENT_100KB) +
+      ((SHMOO_LIMIT_16MB - SHMOO_LIMIT_1MB) / SHMOO_INCREMENT_1MB) +
+      ((SHMOO_LIMIT_32MB - SHMOO_LIMIT_16MB) / SHMOO_INCREMENT_2MB) +
+      ((SHMOO_MEMSIZE_MAX - SHMOO_LIMIT_32MB) / SHMOO_INCREMENT_4MB);
+
+  unsigned int *memSizes = (unsigned int *)malloc(count * sizeof(unsigned int));
+  double *bandwidths = (double *)malloc(count * sizeof(double));
+
+  // Before calculating the cumulative bandwidth, initialize bandwidths array to
+  // NULL
+  for (unsigned int i = 0; i < count; i++) {
+    bandwidths[i] = 0.0;
+  }
+
+  // Use the device asked by the user
+  for (int currentDevice = startDevice; currentDevice <= endDevice;
+       currentDevice++) {
+    cudaSetDevice(currentDevice);
+    // Run the shmoo
+    int iteration = 0;
+    unsigned int memSize = 0;
+
+    while (memSize <= SHMOO_MEMSIZE_MAX) {
+      if (memSize < SHMOO_LIMIT_20KB) {
+        memSize += SHMOO_INCREMENT_1KB;
+      } else if (memSize < SHMOO_LIMIT_50KB) {
+        memSize += SHMOO_INCREMENT_2KB;
+      } else if (memSize < SHMOO_LIMIT_100KB) {
+        memSize += SHMOO_INCREMENT_10KB;
+      } else if (memSize < SHMOO_LIMIT_1MB) {
+        memSize += SHMOO_INCREMENT_100KB;
+      } else if (memSize < SHMOO_LIMIT_16MB) {
+        memSize += SHMOO_INCREMENT_1MB;
+      } else if (memSize < SHMOO_LIMIT_32MB) {
+        memSize += SHMOO_INCREMENT_2MB;
+      } else {
+        memSize += SHMOO_INCREMENT_4MB;
+      }
+
+      memSizes[iteration] = memSize;
+
+      switch (kind) {
+        case DEVICE_TO_HOST:
+          bandwidths[iteration] +=
+              testDeviceToHostTransfer(memSizes[iteration], memMode, wc);
+          break;
+
+        case HOST_TO_DEVICE:
+          bandwidths[iteration] +=
+              testHostToDeviceTransfer(memSizes[iteration], memMode, wc);
+          break;
+
+        case DEVICE_TO_DEVICE:
+          bandwidths[iteration] +=
+              testDeviceToDeviceTransfer(memSizes[iteration]);
+          break;
+      }
+
+      iteration++;
+      printf(".");
+      fflush(0);
+    }
+  }  // Complete the bandwidth computation on all the devices
+
+  // print results
+  printf("\n");
+
+  if (CSV == printmode) {
+    printResultsCSV(memSizes, bandwidths, count, kind, memMode,
+                    (1 + endDevice - startDevice), wc);
+  } else {
+    printResultsReadable(memSizes, bandwidths, count, kind, memMode,
+                         (1 + endDevice - startDevice), wc);
+  }
+
+  // clean up
+  free(memSizes);
+  free(bandwidths);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//  test the bandwidth of a device to host memcopy of a specific size
+///////////////////////////////////////////////////////////////////////////////
+float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
+                               bool wc) {
+  StopWatchInterface *timer = NULL;
+  float elapsedTimeInMs = 0.0f;
+  float bandwidthInGBs = 0.0f;
+  unsigned char *h_idata = NULL;
+  unsigned char *h_odata = NULL;
+  cudaEvent_t start, stop;
+
+  sdkCreateTimer(&timer);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
+
+  // allocate host memory
+  if (PINNED == memMode) {
+  // pinned memory mode - use special function to get OS-pinned memory
+#if CUDART_VERSION >= 2020
+    checkCudaErrors(cudaHostAlloc((void **)&h_idata, memSize,
+                                  (wc) ? cudaHostAllocWriteCombined : 0));
+    checkCudaErrors(cudaHostAlloc((void **)&h_odata, memSize,
+                                  (wc) ? cudaHostAllocWriteCombined : 0));
+#else
+    checkCudaErrors(cudaMallocHost((void **)&h_idata, memSize));
+    checkCudaErrors(cudaMallocHost((void **)&h_odata, memSize));
+#endif
+  } else {
+    // pageable memory mode - use malloc
+    h_idata = (unsigned char *)malloc(memSize);
+    h_odata = (unsigned char *)malloc(memSize);
+
+    if (h_idata == 0 || h_odata == 0) {
+      fprintf(stderr, "Not enough memory avaialable on host to run test!\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  // initialize the memory
+  for (unsigned int i = 0; i < memSize / sizeof(unsigned char); i++) {
+    h_idata[i] = (unsigned char)(i & 0xff);
+  }
+
+  // allocate device memory
+  unsigned char *d_idata;
+  checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
+
+  //Defining important variables for copyKernel
+  int numElements = memSize / sizeof(unsigned char);
+  int threadsPerBlock = 256;
+  int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
+
+  // initialize the device memory
+  //checkCudaErrors(
+  //    cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
+  //);
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 1);
+
+  // copy data from GPU to Host
+  if (PINNED == memMode) {
+    if (bDontUseGPUTiming) sdkStartTimer(&timer);
+    checkCudaErrors(cudaEventRecord(start, 0));
+    for (unsigned int i = 0; i < MEMCOPY_ITERATIONS; i++) {
+      //checkCudaErrors(
+      //  cudaMemcpyAsync(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost, 0)
+      //);
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, h_odata, memSize, 1);
+    }
+    checkCudaErrors(cudaEventRecord(stop, 0));
+    checkCudaErrors(cudaDeviceSynchronize());
+    checkCudaErrors(cudaEventElapsedTime(&elapsedTimeInMs, start, stop));
+    if (bDontUseGPUTiming) {
+      sdkStopTimer(&timer);
+      elapsedTimeInMs = sdkGetTimerValue(&timer);
+      sdkResetTimer(&timer);
+    }
+  } else {
+    elapsedTimeInMs = 0;
+    for (unsigned int i = 0; i < MEMCOPY_ITERATIONS; i++) {
+      sdkStartTimer(&timer);
+      checkCudaErrors(
+          cudaMemcpy(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost)
+      );
+      //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, h_idata, memSize);
+
+      sdkStopTimer(&timer);
+      elapsedTimeInMs += sdkGetTimerValue(&timer);
+      sdkResetTimer(&timer);
+      memset(flush_buf, i, FLUSH_SIZE);
+    }
+  }
+
+  // calculate bandwidth in GB/s
+  double time_s = elapsedTimeInMs / 1e3;
+  bandwidthInGBs = (memSize * (float)MEMCOPY_ITERATIONS) / (double)1e9;
+  bandwidthInGBs = bandwidthInGBs / time_s;
+  // clean up memory
+  checkCudaErrors(cudaEventDestroy(stop));
+  checkCudaErrors(cudaEventDestroy(start));
+  sdkDeleteTimer(&timer);
+
+  if (PINNED == memMode) {
+    checkCudaErrors(cudaFreeHost(h_idata));
+    checkCudaErrors(cudaFreeHost(h_odata));
+  } else {
+    free(h_idata);
+    free(h_odata);
+  }
+
+  checkCudaErrors(cudaFree(d_idata));
+
+  return bandwidthInGBs;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//! test the bandwidth of a host to device memcopy of a specific size
+///////////////////////////////////////////////////////////////////////////////
+float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
+                               bool wc) {
+  StopWatchInterface *timer = NULL;
+  float elapsedTimeInMs = 0.0f;
+  float bandwidthInGBs = 0.0f;
+  cudaEvent_t start, stop;
+  sdkCreateTimer(&timer);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
+
+  // allocate host memory
+  unsigned char *h_odata = NULL;
+
+  if (PINNED == memMode) {
+#if CUDART_VERSION >= 2020
+    // pinned memory mode - use special function to get OS-pinned memory
+    checkCudaErrors(cudaHostAlloc((void **)&h_odata, memSize,
+                                  (wc) ? cudaHostAllocWriteCombined : 0));
+#else
+    // pinned memory mode - use special function to get OS-pinned memory
+    checkCudaErrors(cudaMallocHost((void **)&h_odata, memSize));
+#endif
+  } else {
+    // pageable memory mode - use malloc
+    h_odata = (unsigned char *)malloc(memSize);
+
+    if (h_odata == 0) {
+      fprintf(stderr, "Not enough memory available on host to run test!\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  unsigned char *h_cacheClear1 = (unsigned char *)malloc(CACHE_CLEAR_SIZE);
+  unsigned char *h_cacheClear2 = (unsigned char *)malloc(CACHE_CLEAR_SIZE);
+
+  if (h_cacheClear1 == 0 || h_cacheClear2 == 0) {
+    fprintf(stderr, "Not enough memory available on host to run test!\n");
+    exit(EXIT_FAILURE);
+  }
+
+  // initialize the memory
+  for (unsigned int i = 0; i < memSize / sizeof(unsigned char); i++) {
+    h_odata[i] = (unsigned char)(i & 0xff);
+  }
+
+  for (unsigned int i = 0; i < CACHE_CLEAR_SIZE / sizeof(unsigned char); i++) {
+    h_cacheClear1[i] = (unsigned char)(i & 0xff);
+    h_cacheClear2[i] = (unsigned char)(0xff - (i & 0xff));
+  }
+
+  // allocate device memory
+  unsigned char *d_idata;
+  checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
+
+    //Defining important variables for copyKernel
+  int numElements = memSize / sizeof(unsigned char);
+  int threadsPerBlock = 256;
+  int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
+
+  // copy host memory to device memory
+  if (PINNED == memMode) {
+    if (bDontUseGPUTiming) sdkStartTimer(&timer);
+    checkCudaErrors(cudaEventRecord(start, 0));
+    for (unsigned int i = 0; i < MEMCOPY_ITERATIONS; i++) {
+      //checkCudaErrors(
+      //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
+      //);
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, 1);
+    }
+    checkCudaErrors(cudaEventRecord(stop, 0));
+    checkCudaErrors(cudaDeviceSynchronize());
+    checkCudaErrors(cudaEventElapsedTime(&elapsedTimeInMs, start, stop));
+    if (bDontUseGPUTiming) {
+      sdkStopTimer(&timer);
+      elapsedTimeInMs = sdkGetTimerValue(&timer);
+      sdkResetTimer(&timer);
+    }
+  } else {
+    elapsedTimeInMs = 0;
+    for (unsigned int i = 0; i < MEMCOPY_ITERATIONS; i++) {
+      sdkStartTimer(&timer);
+      checkCudaErrors(
+          cudaMemcpy(d_idata, h_odata, memSize, cudaMemcpyHostToDevice)
+      );
+      //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, h_odata, memSize);
+
+      sdkStopTimer(&timer);
+      elapsedTimeInMs += sdkGetTimerValue(&timer);
+      sdkResetTimer(&timer);
+      memset(flush_buf, i, FLUSH_SIZE);
+    }
+  }
+
+  // calculate bandwidth in GB/s
+  double time_s = elapsedTimeInMs / 1e3;
+  bandwidthInGBs = (memSize * (float)MEMCOPY_ITERATIONS) / (double)1e9;
+  bandwidthInGBs = bandwidthInGBs / time_s;
+  // clean up memory
+  checkCudaErrors(cudaEventDestroy(stop));
+  checkCudaErrors(cudaEventDestroy(start));
+  sdkDeleteTimer(&timer);
+
+  if (PINNED == memMode) {
+    checkCudaErrors(cudaFreeHost(h_odata));
+  } else {
+    free(h_odata);
+  }
+
+  free(h_cacheClear1);
+  free(h_cacheClear2);
+  checkCudaErrors(cudaFree(d_idata));
+
+  return bandwidthInGBs;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//! test the bandwidth of a device to device memcopy of a specific size
+///////////////////////////////////////////////////////////////////////////////
+float testDeviceToDeviceTransfer(unsigned int memSize) {
+  StopWatchInterface *timer = NULL;
+  float elapsedTimeInMs = 0.0f;
+  float bandwidthInGBs = 0.0f;
+  cudaEvent_t start, stop;
+
+  sdkCreateTimer(&timer);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
+
+  // allocate host memory
+  unsigned char *h_idata = (unsigned char *)malloc(memSize);
+
+  if (h_idata == 0) {
+    fprintf(stderr, "Not enough memory avaialable on host to run test!\n");
+    exit(EXIT_FAILURE);
+  }
+
+  // initialize the host memory
+  for (unsigned int i = 0; i < memSize / sizeof(unsigned char); i++) {
+    h_idata[i] = (unsigned char)(i & 0xff);
+  }
+
+  // allocate device memory
+  unsigned char *d_idata;
+  checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
+  unsigned char *d_odata;
+  checkCudaErrors(cudaMalloc((void **)&d_odata, memSize));
+
+  //Defining important variables for copyKernel
+  int numElements = memSize / sizeof(unsigned char);
+  int threadsPerBlock = 256;
+  int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
+
+  // initialize memory
+  //checkCudaErrors(
+  //    cudaMemcpy(d_idata, h_idata, memSize, cudaMemcpyHostToDevice)
+  //);
+  cudaError_t err = cudaSuccess;
+
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 1);
+
+  err = cudaGetLastError();
+
+  if (err != cudaSuccess) {
+    fprintf(stderr, "Failed to launch copyKernel (error code %s)!\n",
+            cudaGetErrorString(err));
+    exit(EXIT_FAILURE);
+  }
+
+  // run the memcopy
+  sdkStartTimer(&timer);
+  checkCudaErrors(cudaEventRecord(start, 0));
+
+  for (unsigned int i = 0; i < MEMCOPY_ITERATIONS; i++) {
+    //checkCudaErrors(
+    //  cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
+    //);
+    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, d_odata, memSize, 1);
+
+    //err = cudaGetLastError();
+//
+    //if (err != cudaSuccess) {
+    //  fprintf(stderr, "Failed to launch copyKernel (error code %s)!\n",
+    //        cudaGetErrorString(err));
+    //  exit(EXIT_FAILURE);
+    //}
+  }
+
+  checkCudaErrors(cudaEventRecord(stop, 0));
+
+  // Since device to device memory copies are non-blocking,
+  // cudaDeviceSynchronize() is required in order to get
+  // proper timing.
+  checkCudaErrors(cudaDeviceSynchronize());
+
+  // get the total elapsed time in ms
+  sdkStopTimer(&timer);
+  checkCudaErrors(cudaEventElapsedTime(&elapsedTimeInMs, start, stop));
+
+  if (bDontUseGPUTiming) {
+    elapsedTimeInMs = sdkGetTimerValue(&timer);
+  }
+
+  // calculate bandwidth in GB/s
+  double time_s = elapsedTimeInMs / 1e3;
+  bandwidthInGBs = (2.0f * memSize * (float)MEMCOPY_ITERATIONS) / (double)1e9;
+  bandwidthInGBs = bandwidthInGBs / time_s;
+
+  // clean up memory
+  sdkDeleteTimer(&timer);
+  free(h_idata);
+  checkCudaErrors(cudaEventDestroy(stop));
+  checkCudaErrors(cudaEventDestroy(start));
+  checkCudaErrors(cudaFree(d_idata));
+  checkCudaErrors(cudaFree(d_odata));
+
+  return bandwidthInGBs;
+}
+
+/////////////////////////////////////////////////////////
+// print results in an easily read format
+////////////////////////////////////////////////////////
+void printResultsReadable(unsigned int *memSizes, double *bandwidths,
+                          unsigned int count, memcpyKind kind,
+                          memoryMode memMode, int iNumDevs, bool wc) {
+  printf(" %s Bandwidth, %i Device(s)\n", sMemoryCopyKind[kind], iNumDevs);
+  printf(" %s Memory Transfers\n", sMemoryMode[memMode]);
+
+  if (wc) {
+    printf(" Write-Combined Memory Writes are Enabled");
+  }
+
+  printf("   Transfer Size (Bytes)\tBandwidth(GB/s)\n");
+  unsigned int i;
+
+  for (i = 0; i < (count - 1); i++) {
+    printf("   %u\t\t\t%s%.1f\n", memSizes[i],
+           (memSizes[i] < 10000) ? "\t" : "", bandwidths[i]);
+  }
+
+  printf("   %u\t\t\t%s%.1f\n\n", memSizes[i],
+         (memSizes[i] < 10000) ? "\t" : "", bandwidths[i]);
+}
+
+///////////////////////////////////////////////////////////////////////////
+// print results in a database format
+///////////////////////////////////////////////////////////////////////////
+void printResultsCSV(unsigned int *memSizes, double *bandwidths,
+                     unsigned int count, memcpyKind kind, memoryMode memMode,
+                     int iNumDevs, bool wc) {
+  std::string sConfig;
+
+  // log config information
+  if (kind == DEVICE_TO_DEVICE) {
+    sConfig += "D2D";
+  } else {
+    if (kind == DEVICE_TO_HOST) {
+      sConfig += "D2H";
+    } else if (kind == HOST_TO_DEVICE) {
+      sConfig += "H2D";
+    }
+
+    if (memMode == PAGEABLE) {
+      sConfig += "-Paged";
+    } else if (memMode == PINNED) {
+      sConfig += "-Pinned";
+
+      if (wc) {
+        sConfig += "-WriteCombined";
+      }
+    }
+  }
+
+  unsigned int i;
+  double dSeconds = 0.0;
+
+  for (i = 0; i < count; i++) {
+    dSeconds = (double)memSizes[i] / (bandwidths[i] * (double)(1e9));
+    printf(
+        "bandwidthTest-%s, Bandwidth = %.1f GB/s, Time = %.5f s, Size = %u "
+        "bytes, NumDevsUsed = %d\n",
+        sConfig.c_str(), bandwidths[i], dSeconds, memSizes[i], iNumDevs);
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////
+// Print help screen
+///////////////////////////////////////////////////////////////////////////
+void printHelp(void) {
+  printf("Usage:  bandwidthTest [OPTION]...\n");
+  printf(
+      "Test the bandwidth for device to host, host to device, and device to "
+      "device transfers\n");
+  printf("\n");
+  printf(
+      "Example:  measure the bandwidth of device to host pinned memory copies "
+      "in the range 1024 Bytes to 102400 Bytes in 1024 Byte increments\n");
+  printf(
+      "./bandwidthTest --memory=pinned --mode=range --start=1024 --end=102400 "
+      "--increment=1024 --dtoh\n");
+
+  printf("\n");
+  printf("Options:\n");
+  printf("--help\tDisplay this help menu\n");
+  printf("--csv\tPrint results as a CSV\n");
+  printf("--device=[deviceno]\tSpecify the device device to be used\n");
+  printf("  all - compute cumulative bandwidth on all the devices\n");
+  printf("  0,1,2,...,n - Specify any particular device to be used\n");
+  printf("--memory=[MEMMODE]\tSpecify which memory mode to use\n");
+  printf("  pageable - pageable memory\n");
+  printf("  pinned   - non-pageable system memory\n");
+  printf("--mode=[MODE]\tSpecify the mode to use\n");
+  printf("  quick - performs a quick measurement\n");
+  printf("  range - measures a user-specified range of values\n");
+  printf("  shmoo - performs an intense shmoo of a large range of values\n");
+
+  printf("--htod\tMeasure host to device transfers\n");
+  printf("--dtoh\tMeasure device to host transfers\n");
+  printf("--dtod\tMeasure device to device transfers\n");
+#if CUDART_VERSION >= 2020
+  printf("--wc\tAllocate pinned memory as write-combined\n");
+#endif
+  printf("--cputiming\tForce CPU-based timing always\n");
+
+  printf("Range mode options\n");
+  printf("--start=[SIZE]\tStarting transfer size in bytes\n");
+  printf("--end=[SIZE]\tEnding transfer size in bytes\n");
+  printf("--increment=[SIZE]\tIncrement size in bytes\n");
+}
