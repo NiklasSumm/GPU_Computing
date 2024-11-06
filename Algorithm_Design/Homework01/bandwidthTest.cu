@@ -669,7 +669,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
 
   //Defining important variables for copyKernel
-  int numElements = memSize / sizeof(unsigned char);
+  int numElements = memSize / 4;
   int threadsPerBlock = 256;
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -804,7 +804,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
 
     //Defining important variables for copyKernel
-  int numElements = memSize / sizeof(unsigned char);
+  int numElements = memSize / 4;
   int threadsPerBlock = 256;
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -897,7 +897,7 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   checkCudaErrors(cudaMalloc((void **)&d_odata, memSize));
 
   //Defining important variables for copyKernel
-  int numElements = memSize / sizeof(unsigned char);
+  int numElements = memSize / 4;
   int threadsPerBlock = 256;
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
