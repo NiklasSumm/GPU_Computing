@@ -190,150 +190,150 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   }
 }
 
-//template <typename T, class Functor>
-//__global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor f) {
-//  size_t bytes_per_ins = sizeof(int4);
-//  size_t num_bytes = num_elements * sizeof(T);
-//  
-//  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-//  int num_kernels = blockDim.x * gridDim.x;
+template <typename T, class Functor>
+__global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor f) {
+  size_t bytes_per_ins = sizeof(int4);
+  size_t num_bytes = num_elements * sizeof(T);
+  
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int num_kernels = blockDim.x * gridDim.x;
+
+  uintptr_t inAddress = reinterpret_cast<uintptr_t>(in);
+  //uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
+
+  size_t prefixBytes = inAddress % bytes_per_ins;
+  size_t prefixElements = prefixBytes / sizeof(T); //The unaligned bytes at the beginning of the array
+
+  if (prefixElements > num_elements) {
+    prefixElements = num_elements;
+  }
+
+  if (idx < prefixElements){
+    out[idx] = f(in[idx]);
+  }
+
+  T* alignedOut = out + prefixBytes;
+  const T* alignedIn = in + prefixBytes;
+
+  size_t postfixBytes = (num_bytes - prefixBytes) % bytes_per_ins; //The unaligned bytes at the end of the array
+  size_t postfixElements = postfixBytes / sizeof(T);
+  size_t alignedBytes = num_bytes - prefixBytes - postfixBytes;
+
+  int num_copies = alignedBytes / bytes_per_ins;
+  int elements_per_copy = bytes_per_ins / sizeof(T);
+  int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
+
+  const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
+  int4* out_as_int4 = reinterpret_cast<int4*>(alignedOut);
+
+  T* copiedElements;
+  T* functionResults = new T[elements_per_copy];
+
+  for (int i = 0; i < copies_per_kernel; i++){
+    int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+    if (index < num_copies){
+      int4 value = in_as_int4[index];
+      memcpy(&copiedElements, &value, sizeof(int4));
+
+      for (int j = 0; i < elements_per_copy; j++){
+        functionResults[j] = f(copiedElements[j]);
+      }
+
+      int4 outValue;
+      memcpy(&outValue, &functionResults, sizeof(int4));
+      out_as_int4[index] = outValue;
+    }
+  }
+
+  if (idx < postfixElements){
+    out[num_elements-idx] = f(in[num_elements-idx]);
+  }
+
+
+  //size_t bytes_per_ins = sizeof(int4);
+  //size_t num_bytes = num_elements * sizeof(T);
 //
-//  uintptr_t inAddress = reinterpret_cast<uintptr_t>(in);
-//  //uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
+  ////__shared__ T* inCopy;
+  ////cudaMalloc((void **)&inCopy, num_bytes);
+  ////__shared__ T* outStore;
+  ////cudaMalloc((void **)&outStore, num_bytes);
 //
-//  size_t prefixBytes = inAddress % bytes_per_ins;
-//  size_t prefixElements = prefixBytes / sizeof(T); //The unaligned bytes at the beginning of the array
+  ////printf("test");
+  //
+  //int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  //int num_kernels = blockDim.x * gridDim.x;
 //
-//  if (prefixElements > num_elements) {
-//    prefixElements = num_elements;
-//  }
+  //uintptr_t inAddress = reinterpret_cast<uintptr_t>(in);
+  ////uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
 //
-//  if (idx < prefixElements){
-//    out[idx] = f(in[idx]);
-//  }
+  //size_t prefixBytes = inAddress % bytes_per_ins;
+  //size_t prefixElements = prefixBytes / sizeof(T); //The unaligned bytes at the beginning of the array
 //
-//  T* alignedOut = out + prefixBytes;
-//  const T* alignedIn = in + prefixBytes;
+  //if (prefixElements > num_elements) {
+  //  prefixElements = num_elements;
+  //}
 //
-//  size_t postfixBytes = (num_bytes - prefixBytes) % bytes_per_ins; //The unaligned bytes at the end of the array
-//  size_t postfixElements = postfixBytes / sizeof(T);
-//  size_t alignedBytes = num_bytes - prefixBytes - postfixBytes;
+  //if (idx < prefixElements){
+  //  inCopy[idx] = in[idx];
+  //}
 //
-//  int num_copies = alignedBytes / bytes_per_ins;
-//  int elements_per_copy = bytes_per_ins / sizeof(T);
-//  int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
+  //T* alignedInCopy = inCopy + prefixBytes;
+  ////T* alignedOut = out + prefixBytes;
+  //const T* alignedIn = in + prefixBytes;
 //
-//  const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
-//  int4* out_as_int4 = reinterpret_cast<int4*>(alignedOut);
+  //size_t postfixBytes = (num_bytes - prefixBytes) % bytes_per_ins; //The unaligned bytes at the end of the array
+  //size_t postfixElements = postfixBytes / sizeof(T);
+  //size_t alignedBytes = num_bytes - prefixBytes - postfixBytes;
 //
-//  T* copiedElements;
-//  T* functionResults = new T[elements_per_copy];
+  //int num_copies = alignedBytes / bytes_per_ins;
+  //int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
 //
-//  for (int i = 0; i < copies_per_kernel; i++){
-//    int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
-//    if (index < num_copies){
-//      int4 value = in_as_int4[index];
-//      memcpy(&copiedElements, &value, sizeof(int4));
+  //const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
+  //int4* inCopy_as_int4 = reinterpret_cast<int4*>(alignedInCopy);
+  //for (int i = 0; i < copies_per_kernel; i++){
+  //  int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+  //  if (index < num_copies){
+  //    inCopy_as_int4[index] = in_as_int4[index];
+  //  }
+  //}
 //
-//      for (int j = 0; i < elements_per_copy; j++){
-//        functionResults[j] = f(copiedElements[j]);
-//      }
+  //if (idx < postfixElements){
+  //  inCopy[num_elements-idx] = in[num_elements-idx];
+  //}
 //
-//      int4 outValue;
-//      memcpy(&outValue, &functionResults, sizeof(int4));
-//      out_as_int4[index] = outValue;
-//    }
-//  }
+  //__syncthreads();
 //
-//  if (idx < postfixElements){
-//    out[num_elements-idx] = f(in[num_elements-idx]);
-//  }
+  //int operationsPerKernel = (num_elements + num_kernels - 1) / num_kernels;
 //
+  //for (int i = 0; i < operationsPerKernel; i++){
+  //  int index = operationsPerKernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+  //  T in_value = inCopy[index];
+  //  const T out_value = f(in_value);
+  //  outStore[index] = out_value;
+  //}
 //
-//  //size_t bytes_per_ins = sizeof(int4);
-//  //size_t num_bytes = num_elements * sizeof(T);
-////
-//  ////__shared__ T* inCopy;
-//  ////cudaMalloc((void **)&inCopy, num_bytes);
-//  ////__shared__ T* outStore;
-//  ////cudaMalloc((void **)&outStore, num_bytes);
-////
-//  ////printf("test");
-//  //
-//  //int idx = blockIdx.x * blockDim.x + threadIdx.x;
-//  //int num_kernels = blockDim.x * gridDim.x;
-////
-//  //uintptr_t inAddress = reinterpret_cast<uintptr_t>(in);
-//  ////uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
-////
-//  //size_t prefixBytes = inAddress % bytes_per_ins;
-//  //size_t prefixElements = prefixBytes / sizeof(T); //The unaligned bytes at the beginning of the array
-////
-//  //if (prefixElements > num_elements) {
-//  //  prefixElements = num_elements;
-//  //}
-////
-//  //if (idx < prefixElements){
-//  //  inCopy[idx] = in[idx];
-//  //}
-////
-//  //T* alignedInCopy = inCopy + prefixBytes;
-//  ////T* alignedOut = out + prefixBytes;
-//  //const T* alignedIn = in + prefixBytes;
-////
-//  //size_t postfixBytes = (num_bytes - prefixBytes) % bytes_per_ins; //The unaligned bytes at the end of the array
-//  //size_t postfixElements = postfixBytes / sizeof(T);
-//  //size_t alignedBytes = num_bytes - prefixBytes - postfixBytes;
-////
-//  //int num_copies = alignedBytes / bytes_per_ins;
-//  //int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
-////
-//  //const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
-//  //int4* inCopy_as_int4 = reinterpret_cast<int4*>(alignedInCopy);
-//  //for (int i = 0; i < copies_per_kernel; i++){
-//  //  int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
-//  //  if (index < num_copies){
-//  //    inCopy_as_int4[index] = in_as_int4[index];
-//  //  }
-//  //}
-////
-//  //if (idx < postfixElements){
-//  //  inCopy[num_elements-idx] = in[num_elements-idx];
-//  //}
-////
-//  //__syncthreads();
-////
-//  //int operationsPerKernel = (num_elements + num_kernels - 1) / num_kernels;
-////
-//  //for (int i = 0; i < operationsPerKernel; i++){
-//  //  int index = operationsPerKernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
-//  //  T in_value = inCopy[index];
-//  //  const T out_value = f(in_value);
-//  //  outStore[index] = out_value;
-//  //}
-////
-//  //__syncthreads();
-//  //
-//  //if (idx < prefixElements){
-//  //  out[idx] = outStore[idx];
-//  //}
-////
-//  //T* alignedOut = out + prefixBytes;
-//  //const T* alignedOuStore = outStore + prefixBytes;
-////
-//  //const int4* outStore_as_int4 = reinterpret_cast<const int4*>(alignedOuStore);
-//  //int4* out_as_int4 = reinterpret_cast<int4*>(alignedOut);
-//  //for (int i = 0; i < copies_per_kernel; i++){
-//  //  int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
-//  //  if (index < num_copies){
-//  //    out_as_int4[index] = outStore_as_int4[index];
-//  //  }
-//  //}
-////
-//  //if (idx < postfixElements){
-//  //  out[num_elements-idx] = outStore[num_elements-idx];
-//  //}
-//}
+  //__syncthreads();
+  //
+  //if (idx < prefixElements){
+  //  out[idx] = outStore[idx];
+  //}
+//
+  //T* alignedOut = out + prefixBytes;
+  //const T* alignedOuStore = outStore + prefixBytes;
+//
+  //const int4* outStore_as_int4 = reinterpret_cast<const int4*>(alignedOuStore);
+  //int4* out_as_int4 = reinterpret_cast<int4*>(alignedOut);
+  //for (int i = 0; i < copies_per_kernel; i++){
+  //  int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+  //  if (index < num_copies){
+  //    out_as_int4[index] = outStore_as_int4[index];
+  //  }
+  //}
+//
+  //if (idx < postfixElements){
+  //  out[num_elements-idx] = outStore[num_elements-idx];
+  //}
+}
 
 struct funct{
   public:
