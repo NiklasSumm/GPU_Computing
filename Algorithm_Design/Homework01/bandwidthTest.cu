@@ -234,7 +234,6 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
     if (index < num_copies){
       int4 value = in_as_int4[index];
       memcpy(&copiedElements, &value, sizeof(int4));
-      printf("test");
       for (int j = 0; i < elements_per_copy; j++){
         functionResults[j] = f(copiedElements[j]);
       }
@@ -244,6 +243,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
       out_as_int4[index] = outValue;
     }
   }
+  printf("test");
 
   if (idx < postfixElements){
     out[num_elements-idx] = f(in[num_elements-idx]);
