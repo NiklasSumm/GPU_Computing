@@ -236,13 +236,12 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
       memcpy(&copiedElements, &value, sizeof(int4));
       for (int j = 0; i < elements_per_copy; j++){
         functionResults[j] = f(copiedElements[j]);
+        printf(" %i ", i);
       }
 
       int4 outValue;
       memcpy(&outValue, &functionResults, sizeof(int4));
       out_as_int4[index] = outValue;
-
-      printf("test");
     }
   }
 
