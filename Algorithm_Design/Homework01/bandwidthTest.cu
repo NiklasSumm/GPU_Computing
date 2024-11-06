@@ -920,9 +920,9 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaMalloc((void **)&d_idata_int, memSize));
 
     //Defining important variables for copyKernel
-  int numElements = memSize / BYTES_PER_INST;
-  int threadsPerBlock = 256;
-  int blocksPerGrid = (numElements + (threadsPerBlock * COPIES_PER_THREAD) - 1) / (threadsPerBlock * COPIES_PER_THREAD);
+  //int numElements = memSize / BYTES_PER_INST;
+  //int threadsPerBlock = 256;
+  //int blocksPerGrid = (numElements + (threadsPerBlock * COPIES_PER_THREAD) - 1) / (threadsPerBlock * COPIES_PER_THREAD);
 
   funct f;
 
