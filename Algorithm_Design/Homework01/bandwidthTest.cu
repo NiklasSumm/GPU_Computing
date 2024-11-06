@@ -139,13 +139,15 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   int num_copies = (static_cast<int>(num_bytes) + bytes_per_ins - 1) / bytes_per_ins;
   int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
 
-  printf(" %i ", copies_per_kernel);
+  //printf(" %i ", copies_per_kernel);
 
   if (canPrint){
     printf("Number of kernels %i\n", num_kernels);
     printf("Number of copies %i\n", num_copies);
     printf("Copies per kernel %i\n", copies_per_kernel);
   }
+
+  __syncthreads();
 
   if (bytes_per_ins == 4){
     const int* in_as_int = reinterpret_cast<const int*>(in);
