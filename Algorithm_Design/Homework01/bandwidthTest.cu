@@ -210,7 +210,6 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
 
   if (idx < prefixElements){
     out[idx] = f(in[idx]);
-    printf("test1");
   }
 
   T* alignedOut = out + prefixBytes;
@@ -236,9 +235,9 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
       int4 value = in_as_int4[index];
       memcpy(&copiedElements, &value, sizeof(int4));
 
-      for (int j = 0; i < elements_per_copy; j++){
+      for (int j = 0; j < elements_per_copy; j++){
         functionResults[j] = f(copiedElements[j]);
-        printf("test2");
+        printf("test");
       }
 
       int4 outValue;
@@ -249,7 +248,6 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
 
   if (idx < postfixElements){
     out[num_elements-idx] = f(in[num_elements-idx]);
-    printf("test3");
   }
 
 
