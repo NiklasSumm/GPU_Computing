@@ -73,8 +73,8 @@ static const char *sSDKsample = "CUDA Bandwidth Test";
 #define SHMOO_LIMIT_16MB (16 * 1e6)          // 16 MB
 #define SHMOO_LIMIT_32MB (32 * 1e6)          // 32 MB
 
-#define BYTES_PER_INST 4
-#define COPIES_PER_THREAD 1
+#define BYTES_PER_INST 16
+#define COPIES_PER_THREAD 4
 
 // CPU cache flush
 #define FLUSH_SIZE (256 * 1024 * 1024)
@@ -127,9 +127,29 @@ void printResultsCSV(unsigned int *memSizes, double *bandwidths,
 void printHelp(void);
 
 __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t num_bytes, int bytes_per_ins){
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int num_kernels = blockDim.x * gridDim.x;
 
-  int num_copies = (num_bytes + bytes_per_ins - 1) / bytes_per_ins;
+  uintptr_t inAddress = reinterpret_cast<uintptr_t>(in);
+  uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
+
+  size_t prefixBytes = inAddress % bytes_per_ins; //The unaligned bytes at the beginning of the array
+
+  if (prefixBytes > num_bytes) {
+    prefixBytes = num_bytes;
+  }
+
+  if (idx < prefixBytes){
+    out[idx] = in[idx];
+  }
+
+  char* alignedOut = out + prefixBytes;
+  const char* alignedIn = in + prefixBytes;
+
+  size_t postfixBytes = (num_bytes - prefixBytes) % bytes_per_ins; //The unaligned bytes at the end of the array
+  size_t alignedBytes = num_bytes - prefixBytes - postfixBytes;
+
+  int num_copies = alignedBytes / bytes_per_ins;
   int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
 
   if (bytes_per_ins == 4){
@@ -163,6 +183,10 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
         out_as_int4[index] = in_as_int4[index];
       }
     }
+  }
+
+  if (idx < postfixBytes){
+    out[num_bytes-idx] = in[num_bytes-idx]
   }
 }
 
