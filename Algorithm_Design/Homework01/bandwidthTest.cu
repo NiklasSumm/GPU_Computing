@@ -347,6 +347,7 @@ struct funct{
 // Program main
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv) {
+  printf("test");
   pArgc = &argc;
   pArgv = argv;
 
