@@ -199,6 +199,8 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   cudaMalloc((void **)&inCopy, num_bytes);
   __shared__ T* outStore;
   cudaMalloc((void **)&outStore, num_bytes);
+
+  printf("test");
   
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int num_kernels = blockDim.x * gridDim.x;
