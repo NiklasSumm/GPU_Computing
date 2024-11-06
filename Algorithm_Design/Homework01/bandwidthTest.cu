@@ -1000,7 +1000,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
       //);
       //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, BYTES_PER_INST);
-      tranformKernel<int, funct><<<16,256>>>(h_odata_int, d_idata_int, memSize / sizeof(int), f);
+      //tranformKernel<int, funct><<<16,256>>>(h_odata_int, d_idata_int, memSize / sizeof(int), f);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
