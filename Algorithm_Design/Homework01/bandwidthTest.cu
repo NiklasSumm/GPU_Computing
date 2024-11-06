@@ -245,6 +245,8 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
     }
   }
 
+  printf("test");
+
   if (idx < postfixElements){
     out[num_elements-idx] = f(in[num_elements-idx]);
   }
