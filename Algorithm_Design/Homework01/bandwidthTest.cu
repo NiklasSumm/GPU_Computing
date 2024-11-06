@@ -347,7 +347,6 @@ struct funct{
 // Program main
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv) {
-  printf("test");
   pArgc = &argc;
   pArgv = argv;
 
@@ -930,8 +929,6 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaEventCreate(&start));
   checkCudaErrors(cudaEventCreate(&stop));
 
-  printf("test");
-
   // allocate host memory
   unsigned char *h_odata = NULL;
   int *h_odata_int = NULL;
@@ -944,6 +941,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
 #else
     // pinned memory mode - use special function to get OS-pinned memory
     checkCudaErrors(cudaMallocHost((void **)&h_odata, memSize));
+    checkCudaErrors(cudaMallocHost((void **)&h_odata_int, memSize));
 #endif
   } else {
     // pageable memory mode - use malloc
