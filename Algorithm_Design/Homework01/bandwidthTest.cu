@@ -74,7 +74,7 @@ static const char *sSDKsample = "CUDA Bandwidth Test";
 #define SHMOO_LIMIT_32MB (32 * 1e6)          // 32 MB
 
 #define BYTES_PER_INST 4
-#define COPIES_PER_THREAD 4
+#define COPIES_PER_THREAD 1
 
 // CPU cache flush
 #define FLUSH_SIZE (256 * 1024 * 1024)
