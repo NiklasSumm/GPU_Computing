@@ -212,6 +212,8 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
     out[idx] = f(in[idx]);
   }
 
+  printf("test");
+
   T* alignedOut = out + prefixBytes;
   const T* alignedIn = in + prefixBytes;
 
