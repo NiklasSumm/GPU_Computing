@@ -129,9 +129,9 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   int num_copies = (static_cast<int>(num_bytes) + bytes_per_ins - 1) / bytes_per_ins;
   int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
 
-  printf("Number of kernels %i\n", num_kernels);
-  printf("Number of copies %i\n", num_copies);
-  printf("Copies per kernel %i\n", copies_per_kernel);
+  //printf("Number of kernels %i\n", num_kernels);
+  //printf("Number of copies %i\n", num_copies);
+  //printf("Copies per kernel %i\n", copies_per_kernel);
 
   if (bytes_per_ins == 4){
     const int* in_as_int = reinterpret_cast<const int*>(in);
@@ -669,9 +669,9 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
 
   //Defining important variables for copyKernel
-  //int numElements = memSize / sizeof(unsigned char);
+  int numElements = memSize / sizeof(unsigned char);
   int threadsPerBlock = 256;
-  int blocksPerGrid = 4; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
+  int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // initialize the device memory
   //checkCudaErrors(
@@ -804,9 +804,9 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
 
     //Defining important variables for copyKernel
-  //int numElements = memSize / sizeof(unsigned char);
+  int numElements = memSize / sizeof(unsigned char);
   int threadsPerBlock = 256;
-  int blocksPerGrid = 4; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
+  int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // copy host memory to device memory
   if (PINNED == memMode) {
@@ -897,9 +897,9 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   checkCudaErrors(cudaMalloc((void **)&d_odata, memSize));
 
   //Defining important variables for copyKernel
-  //int numElements = memSize / sizeof(unsigned char);
+  int numElements = memSize / sizeof(unsigned char);
   int threadsPerBlock = 256;
-  int blocksPerGrid = 4; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
+  int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // initialize memory
   //checkCudaErrors(
