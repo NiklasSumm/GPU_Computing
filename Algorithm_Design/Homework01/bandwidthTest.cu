@@ -204,7 +204,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   uintptr_t inAddress = reinterpret_cast<uintptr_t>(in);
   //uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
 
-  size_t prefixBytes = inAddress % bytes_per_ins
+  size_t prefixBytes = inAddress % bytes_per_ins;
   size_t prefixElements = prefixBytes / sizeof(T); //The unaligned bytes at the beginning of the array
 
   if (prefixElements > num_elements) {
@@ -238,7 +238,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
     inCopy[num_elements-idx] = in[num_elements-idx];
   }
 
-  __syncThreads();
+  __syncthreads();
 
   int operationsPerKernel = (num_elements + num_kernels - 1) / num_kernels;
 
@@ -249,7 +249,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
     outStore[index] = out_value;
   }
 
-  _syncThreads();
+  __syncthreads();
   
   if (idx < prefixElements){
     out[idx] = outStore[idx];
@@ -276,7 +276,7 @@ struct funct{
   int operator()(int n){
     return n/2;
   }
-}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Program main
@@ -866,6 +866,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
 
   // allocate host memory
   unsigned char *h_odata = NULL;
+  int *h_odata_int = NULL;
 
   if (PINNED == memMode) {
 #if CUDART_VERSION >= 2020
@@ -932,7 +933,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
       //);
       //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, BYTES_PER_INST);
-      tranformKernel<int, funct><<<16,256>>>(h_odata_int, d_idata_int, memSize / sizeof(int), f)
+      tranformKernel<int, funct><<<16,256>>>(h_odata_int, d_idata_int, memSize / sizeof(int), f);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
