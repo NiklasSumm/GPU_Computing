@@ -143,8 +143,8 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
     out[idx] = in[idx];
   }
 
-  char* alignedOut = out + prefixBytes;
-  const char* alignedIn = in + prefixBytes;
+  unsigned char* alignedOut = out + prefixBytes;
+  const unsigned char* alignedIn = in + prefixBytes;
 
   size_t postfixBytes = (num_bytes - prefixBytes) % bytes_per_ins; //The unaligned bytes at the end of the array
   size_t alignedBytes = num_bytes - prefixBytes - postfixBytes;
