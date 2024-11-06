@@ -669,7 +669,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
 
   //Defining important variables for copyKernel
-  int numElements = memSize / 4;
+  int numElements = memSize / 16;
   int threadsPerBlock = 256;
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -680,7 +680,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
 
   cudaError_t err = cudaSuccess;
 
-  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 4);
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 16);
 
   err = cudaGetLastError();
 
@@ -698,7 +698,7 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
       //checkCudaErrors(
       //  cudaMemcpyAsync(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost, 0)
       //);
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, h_odata, memSize, 4);
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, h_odata, memSize, 16);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -804,7 +804,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
 
     //Defining important variables for copyKernel
-  int numElements = memSize / 4;
+  int numElements = memSize / 16;
   int threadsPerBlock = 256;
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -816,7 +816,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       //checkCudaErrors(
       //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
       //);
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, 4);
+      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, 16);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -897,7 +897,7 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   checkCudaErrors(cudaMalloc((void **)&d_odata, memSize));
 
   //Defining important variables for copyKernel
-  int numElements = memSize / 4;
+  int numElements = memSize / 16;
   int threadsPerBlock = 256;
   int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -907,7 +907,7 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   //);
   cudaError_t err = cudaSuccess;
 
-  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 4);
+  copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 16);
 
   err = cudaGetLastError();
 
@@ -925,7 +925,7 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
     //checkCudaErrors(
     //  cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
     //);
-    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, d_odata, memSize, 4);
+    copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, d_odata, memSize, 16);
 
     //err = cudaGetLastError();
 //
