@@ -209,7 +209,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   }
 
   if (idx < prefixElements){
-    inCopy[idx] = f(in[idx]);
+    out[idx] = f(in[idx]);
   }
 
   T* alignedOut = out + prefixBytes;
@@ -246,7 +246,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   }
 
   if (idx < postfixElements){
-    our[num_elements-idx] = f(in[num_elements-idx]);
+    out[num_elements-idx] = f(in[num_elements-idx]);
   }
 
 
