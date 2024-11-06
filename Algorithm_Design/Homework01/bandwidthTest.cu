@@ -938,6 +938,8 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
     // pinned memory mode - use special function to get OS-pinned memory
     checkCudaErrors(cudaHostAlloc((void **)&h_odata, memSize,
                                   (wc) ? cudaHostAllocWriteCombined : 0));
+    checkCudaErrors(cudaHostAlloc((void **)&h_odata_int, memSize,
+                                  (wc) ? cudaHostAllocWriteCombined : 0));
 #else
     // pinned memory mode - use special function to get OS-pinned memory
     checkCudaErrors(cudaMallocHost((void **)&h_odata, memSize));
