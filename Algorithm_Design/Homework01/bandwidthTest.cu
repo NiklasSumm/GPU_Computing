@@ -229,14 +229,12 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   T* copiedElements;
   T* functionResults = new T[elements_per_copy];
 
-  printf("test");
-
   for (int i = 0; i < copies_per_kernel; i++){
     int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
     if (index < num_copies){
       int4 value = in_as_int4[index];
       memcpy(&copiedElements, &value, sizeof(int4));
-
+      printf("test");
       for (int j = 0; i < elements_per_copy; j++){
         functionResults[j] = f(copiedElements[j]);
       }
