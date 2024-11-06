@@ -192,6 +192,7 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
 
 template <typename T, class Functor>
 __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor f) {
+  printf("test");
   size_t bytes_per_ins = sizeof(int4);
   size_t num_bytes = num_elements * sizeof(T);
   
