@@ -241,9 +241,10 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
       int4 outValue;
       memcpy(&outValue, &functionResults, sizeof(int4));
       out_as_int4[index] = outValue;
+
+      printf("test");
     }
   }
-  printf("test");
 
   if (idx < postfixElements){
     out[num_elements-idx] = f(in[num_elements-idx]);
