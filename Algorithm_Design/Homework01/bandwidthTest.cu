@@ -274,7 +274,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   }
 }
 
-struct funct{
+__device__ struct funct{
   int operator()(int n){
     return n/2;
   }
