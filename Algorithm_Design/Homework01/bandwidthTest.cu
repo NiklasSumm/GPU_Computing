@@ -136,7 +136,7 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
 
   int num_kernels = blockDim.x * 256;
 
-  int num_copies = (num_bytes + bytes_per_ins - 1) / bytes_per_ins;
+  int num_copies = (static_cast<int>(num_bytes) + bytes_per_ins - 1) / bytes_per_ins;
   int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
 
   printf(" %i ", copies_per_kernel);
