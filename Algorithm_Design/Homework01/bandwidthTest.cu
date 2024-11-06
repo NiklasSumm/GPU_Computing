@@ -124,24 +124,14 @@ void printResultsCSV(unsigned int *memSizes, double *bandwidths,
 void printHelp(void);
 
 __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t num_bytes, int bytes_per_ins){
-  bool canPrint = blockIdx.x == 0 & threadIdx.x == 0;
-
-  if (canPrint){
-    printf("test");
-  }
-
   int num_kernels = blockDim.x * 256;
 
-  int num_copies = (num_bytes + bytes_per_ins - 1) / bytes_per_ins;
+  int num_copies = (static_cast<int>(num_bytes) + bytes_per_ins - 1) / bytes_per_ins;
   int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
 
-  if (canPrint){
-    printf("Number of kernels %i\n", num_kernels);
-    printf("Number of copies %i\n", num_copies);
-    printf("Copies per kernel %i\n", copies_per_kernel);
-  }
-
-  __syncthreads();
+  printf("Number of kernels %i\n", num_kernels);
+  printf("Number of copies %i\n", num_copies);
+  printf("Copies per kernel %i\n", copies_per_kernel);
 
   if (bytes_per_ins == 4){
     const int* in_as_int = reinterpret_cast<const int*>(in);
@@ -680,8 +670,8 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
 
   //Defining important variables for copyKernel
   int numElements = memSize / sizeof(unsigned char);
-  int threadsPerBlock = 256;
-  int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
+  int threadsPerBlock = 1; //256;
+  int blocksPerGrid = 1; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // initialize the device memory
   //checkCudaErrors(
@@ -691,7 +681,6 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
   cudaError_t err = cudaSuccess;
 
   copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 4);
-  cudaDeviceSynchronize();
 
   err = cudaGetLastError();
 
@@ -710,7 +699,6 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
       //  cudaMemcpyAsync(h_odata, d_idata, memSize, cudaMemcpyDeviceToHost, 0)
       //);
       copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, h_odata, memSize, 4);
-      cudaDeviceSynchronize();
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -817,8 +805,8 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
 
     //Defining important variables for copyKernel
   int numElements = memSize / sizeof(unsigned char);
-  int threadsPerBlock = 256;
-  int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
+  int threadsPerBlock = 1; //256;
+  int blocksPerGrid = 1; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // copy host memory to device memory
   if (PINNED == memMode) {
@@ -829,7 +817,6 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
       //);
       copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, 4);
-      cudaDeviceSynchronize();
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
@@ -911,8 +898,8 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
 
   //Defining important variables for copyKernel
   int numElements = memSize / sizeof(unsigned char);
-  int threadsPerBlock = 256;
-  int blocksPerGrid = (numElements + threadsPerBlock - 1) / threadsPerBlock;
+  int threadsPerBlock = 1; //256;
+  int blocksPerGrid = 1; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // initialize memory
   //checkCudaErrors(
@@ -921,7 +908,6 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
   cudaError_t err = cudaSuccess;
 
   copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_idata, d_idata, memSize, 4);
-  cudaDeviceSynchronize();
 
   err = cudaGetLastError();
 
@@ -940,7 +926,6 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
     //  cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
     //);
     copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, d_odata, memSize, 4);
-    cudaDeviceSynchronize();
 
     //err = cudaGetLastError();
 //
