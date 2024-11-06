@@ -73,7 +73,7 @@ static const char *sSDKsample = "CUDA Bandwidth Test";
 #define SHMOO_LIMIT_16MB (16 * 1e6)          // 16 MB
 #define SHMOO_LIMIT_32MB (32 * 1e6)          // 32 MB
 
-#define BYTES_PER_INST 16
+#define BYTES_PER_INST 4
 #define COPIES_PER_THREAD 1
 
 // CPU cache flush
@@ -187,6 +187,94 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
 
   if (idx < postfixBytes){
     out[num_bytes-idx] = in[num_bytes-idx];
+  }
+}
+
+template <typename T, class Functor>
+__global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor f) {
+  size_t bytes_per_ins = sizeof(int4);
+  size_t num_bytes = num_elements * sizeof(T);
+
+  __shared__ T* inCopy[num_elements];
+  __shared__ T* outStore[num_elements];
+  
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  int num_kernels = blockDim.x * gridDim.x;
+
+  uintptr_t inAddress = reinterpret_cast<uintptr_t>(in);
+  //uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
+
+  size_t prefixBytes = inAddress % bytes_per_ins
+  size_t prefixElements = prefixBytes / sizeof(T); //The unaligned bytes at the beginning of the array
+
+  if (prefixElements > num_elements) {
+    prefixElements = num_elements;
+  }
+
+  if (idx < prefixElements){
+    inCopy[idx] = in[idx];
+  }
+
+  T* alignedInCopy = inCopy + prefixBytes;
+  const T* alignedIn = in + prefixBytes;
+
+  size_t postfixBytes = (num_bytes - prefixBytes) % bytes_per_ins; //The unaligned bytes at the end of the array
+  size_t postfixElements = postfixBytes / sizeof(T);
+  size_t alignedBytes = num_bytes - prefixBytes - postfixBytes;
+
+  int num_copies = alignedBytes / bytes_per_ins;
+  int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
+
+  const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
+  int4* inCopy_as_int4 = reinterpret_cast<int4*>(alignedInCopy);
+  for (int i = 0; i < copies_per_kernel; i++){
+    int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+    if (index < num_copies){
+      inCopy_as_int4[index] = in_as_int4[index];
+    }
+  }
+
+  if (idx < postfixElements){
+    inCopy[num_elements-idx] = in[num_elements-idx];
+  }
+
+  __syncThreads();
+
+  int operationsPerKernel = (num_elements + num_kernels - 1) / num_kernels;
+
+  for (int i = 0; i < operationsPerKernel; i++){
+    int index = operationsPerKernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+    T in_value = inCopy[index];
+    const T out_value = f(in_value);
+    outStore[index] = out_value;
+  }
+
+  _syncThreads();
+  
+  if (idx < prefixElements){
+    out[idx] = outStore[idx];
+  }
+
+  T* alignedOut = out + prefixBytes;
+  const T* alignedOuStore = outStore + prefixBytes;
+
+  const int4* outStore_as_int4 = reinterpret_cast<const int4*>(alignedOuStore);
+  int4* out_as_int4 = reinterpret_cast<int4*>(alignedOut);
+  for (int i = 0; i < copies_per_kernel; i++){
+    int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+    if (index < num_copies){
+      out_as_int4[index] = outStore_as_int4[index];
+    }
+  }
+
+  if (idx < postfixElements){
+    out[num_elements-idx] = outStore[num_elements-idx];
+  }
+}
+
+struct funct{
+  int operator()(int n){
+    return n/2;
   }
 }
 
@@ -791,6 +879,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
   } else {
     // pageable memory mode - use malloc
     h_odata = (unsigned char *)malloc(memSize);
+    h_odata_int = (int *)malloc(memSize);
 
     if (h_odata == 0) {
       fprintf(stderr, "Not enough memory available on host to run test!\n");
@@ -811,6 +900,10 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
     h_odata[i] = (unsigned char)(i & 0xff);
   }
 
+  for (unsigned int i = 0; i < memSize / sizeof(int); i++) {
+    h_odata_int[i] = i;
+  }
+
   for (unsigned int i = 0; i < CACHE_CLEAR_SIZE / sizeof(unsigned char); i++) {
     h_cacheClear1[i] = (unsigned char)(i & 0xff);
     h_cacheClear2[i] = (unsigned char)(0xff - (i & 0xff));
@@ -820,10 +913,15 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
   unsigned char *d_idata;
   checkCudaErrors(cudaMalloc((void **)&d_idata, memSize));
 
+  int *d_idata_int;
+  checkCudaErrors(cudaMalloc((void **)&d_idata_int, memSize));
+
     //Defining important variables for copyKernel
   int numElements = memSize / BYTES_PER_INST;
   int threadsPerBlock = 256;
   int blocksPerGrid = (numElements + (threadsPerBlock * COPIES_PER_THREAD) - 1) / (threadsPerBlock * COPIES_PER_THREAD);
+
+  funct f;
 
   // copy host memory to device memory
   if (PINNED == memMode) {
@@ -833,7 +931,8 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       //checkCudaErrors(
       //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
       //);
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, BYTES_PER_INST);
+      //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, BYTES_PER_INST);
+      tranformKernel<int, funct><<<16,256>>>(h_odata_int, d_idata_int, memSize / sizeof(int), f)
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
