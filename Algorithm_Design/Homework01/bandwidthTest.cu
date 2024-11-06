@@ -186,7 +186,7 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   }
 
   if (idx < postfixBytes){
-    out[num_bytes-idx] = in[num_bytes-idx]
+    out[num_bytes-idx] = in[num_bytes-idx];
   }
 }
 
