@@ -133,7 +133,7 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   uintptr_t inAddress = reinterpret_cast<uintptr_t>(in);
   //uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
 
-  size_t prefixBytes = inAddress % bytes_per_ins; //The unaligned bytes at the beginning of the array
+  size_t prefixBytes = bytes_per_ins - (inAddress % bytes_per_ins); //The unaligned bytes at the beginning of the array
 
   if (prefixBytes > num_bytes) {
     prefixBytes = num_bytes;
@@ -201,7 +201,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   uintptr_t inAddress = reinterpret_cast<uintptr_t>(in);
   //uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
 
-  size_t prefixBytes = inAddress % bytes_per_ins;
+  size_t prefixBytes = bytes_per_ins - (inAddress % bytes_per_ins);
   size_t prefixElements = prefixBytes / sizeof(T); //The unaligned bytes at the beginning of the array
 
   if (prefixElements > num_elements) {
@@ -210,6 +210,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
 
   if (idx < prefixElements){
     out[idx] = f(in[idx]);
+    printf("test1");
   }
 
   T* alignedOut = out + prefixBytes;
@@ -226,7 +227,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
   int4* out_as_int4 = reinterpret_cast<int4*>(alignedOut);
 
-  T* copiedElements;
+  T* copiedElements = new T[elements_per_copy];
   T* functionResults = new T[elements_per_copy];
 
   for (int i = 0; i < copies_per_kernel; i++){
@@ -234,9 +235,10 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
     if (index < num_copies){
       int4 value = in_as_int4[index];
       memcpy(&copiedElements, &value, sizeof(int4));
+
       for (int j = 0; i < elements_per_copy; j++){
-        printf(" %i ", i);
         functionResults[j] = f(copiedElements[j]);
+        printf("test2");
       }
 
       int4 outValue;
@@ -247,6 +249,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
 
   if (idx < postfixElements){
     out[num_elements-idx] = f(in[num_elements-idx]);
+    printf("test3");
   }
 
 
