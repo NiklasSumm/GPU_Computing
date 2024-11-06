@@ -153,8 +153,8 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
 
   if (bytes_per_ins == 4){
-    const int* in_as_int = reinterpret_cast<const int*>(in);
-    int* out_as_int = reinterpret_cast<int*>(out);
+    const int* in_as_int = reinterpret_cast<const int*>(alignedIn);
+    int* out_as_int = reinterpret_cast<int*>(alignedOut);
     for (int i = 0; i < copies_per_kernel; i++){
       int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
       if (index < num_copies){
@@ -164,8 +164,8 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   }
 
   if (bytes_per_ins == 8){
-    const int2* in_as_int2 = reinterpret_cast<const int2*>(in);
-    int2* out_as_int2 = reinterpret_cast<int2*>(out);
+    const int2* in_as_int2 = reinterpret_cast<const int2*>(alignedIn);
+    int2* out_as_int2 = reinterpret_cast<int2*>(alignedOut);
     for (int i = 0; i < copies_per_kernel; i++){
       int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
       if (index < num_copies){
@@ -175,8 +175,8 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   }
 
   if (bytes_per_ins == 16){
-    const int4* in_as_int4 = reinterpret_cast<const int4*>(in);
-    int4* out_as_int4 = reinterpret_cast<int4*>(out);
+    const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
+    int4* out_as_int4 = reinterpret_cast<int4*>(alignedOut);
     for (int i = 0; i < copies_per_kernel; i++){
       int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
       if (index < num_copies){
