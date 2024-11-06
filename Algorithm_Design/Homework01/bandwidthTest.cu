@@ -124,7 +124,7 @@ void printResultsCSV(unsigned int *memSizes, double *bandwidths,
 void printHelp(void);
 
 __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t num_bytes, int bytes_per_ins){
-  int num_kernels = blockDim.x * 256;
+  int num_kernels = blockDim.x * gridDim.x;
 
   int num_copies = (static_cast<int>(num_bytes) + bytes_per_ins - 1) / bytes_per_ins;
   int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
