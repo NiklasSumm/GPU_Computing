@@ -131,7 +131,7 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   int num_kernels = blockDim.x * gridDim.x;
 
   uintptr_t inAddress = reinterpret_cast<uintptr_t>(in);
-  uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
+  //uintptr_t outAddress = reinterpret_cast<uintptr_t>(out);
 
   size_t prefixBytes = inAddress % bytes_per_ins; //The unaligned bytes at the beginning of the array
 
