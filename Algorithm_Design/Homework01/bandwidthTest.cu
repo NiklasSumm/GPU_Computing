@@ -195,8 +195,8 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   size_t bytes_per_ins = sizeof(int4);
   size_t num_bytes = num_elements * sizeof(T);
 
-  __shared__ T* inCopy[num_elements];
-  __shared__ T* outStore[num_elements];
+  extern __shared__ T* inCopy[num_elements];
+  extern __shared__ T* outStore[num_elements];
   
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int num_kernels = blockDim.x * gridDim.x;
