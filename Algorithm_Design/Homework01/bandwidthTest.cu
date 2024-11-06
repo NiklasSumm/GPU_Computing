@@ -670,8 +670,8 @@ float testDeviceToHostTransfer(unsigned int memSize, memoryMode memMode,
 
   //Defining important variables for copyKernel
   //int numElements = memSize / sizeof(unsigned char);
-  int threadsPerBlock = 1; //256;
-  int blocksPerGrid = 1; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
+  int threadsPerBlock = 256;
+  int blocksPerGrid = 4; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // initialize the device memory
   //checkCudaErrors(
@@ -805,8 +805,8 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
 
     //Defining important variables for copyKernel
   //int numElements = memSize / sizeof(unsigned char);
-  int threadsPerBlock = 1; //256;
-  int blocksPerGrid = 1; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
+  int threadsPerBlock = 256;
+  int blocksPerGrid = 4; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // copy host memory to device memory
   if (PINNED == memMode) {
@@ -898,8 +898,8 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
 
   //Defining important variables for copyKernel
   //int numElements = memSize / sizeof(unsigned char);
-  int threadsPerBlock = 1; //256;
-  int blocksPerGrid = 1; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
+  int threadsPerBlock = 256;
+  int blocksPerGrid = 4; //(numElements + threadsPerBlock - 1) / threadsPerBlock;
 
   // initialize memory
   //checkCudaErrors(
