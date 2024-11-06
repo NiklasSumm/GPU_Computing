@@ -192,7 +192,6 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
 
 template <typename T, class Functor>
 __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor f) {
-  printf("test");
   size_t bytes_per_ins = sizeof(int4);
   size_t num_bytes = num_elements * sizeof(T);
   
@@ -999,6 +998,7 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
       //);
       //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, BYTES_PER_INST);
+      printf("test");
       tranformKernel<int, funct><<<16,256>>>(h_odata_int, d_idata_int, memSize / sizeof(int), f);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
