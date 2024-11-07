@@ -226,8 +226,8 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
   int4* out_as_int4 = reinterpret_cast<int4*>(alignedOut);
 
-  T* copiedElements = new T[elements_per_copy];
-  T* functionResults = new T[elements_per_copy];
+  //T* copiedElements = new T[elements_per_copy];
+  //T* functionResults = new T[elements_per_copy];
 
   T copiedElements[elements_per_copy];
   T functionResults[elements_per_copy];
