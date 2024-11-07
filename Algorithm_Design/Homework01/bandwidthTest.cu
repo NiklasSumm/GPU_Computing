@@ -236,7 +236,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
       memcpy(copiedElements, &value, sizeof(int4));
 
       for (int j = 0; j < elements_per_copy; j++){
-        functionResults[j] = f(copiedElements[j]);
+        //functionResults[j] = f(copiedElements[j]);
       }
 
       int4 outValue;
