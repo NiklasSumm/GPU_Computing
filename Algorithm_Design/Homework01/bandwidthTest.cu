@@ -230,7 +230,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   T* functionResults = new T[elements_per_copy];
 
   int4* outValue;
-  int4 value;
+  int4* value = new int4[1];
 
   for (int i = 0; i < copies_per_kernel; i++){
     int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
