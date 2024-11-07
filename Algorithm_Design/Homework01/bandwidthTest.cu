@@ -220,7 +220,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   size_t alignedBytes = num_bytes - prefixBytes - postfixBytes;
 
   int num_copies = alignedBytes / bytes_per_ins;
-  int elements_per_copy = bytes_per_ins / sizeof(T);
+  const int elements_per_copy = bytes_per_ins / sizeof(T);
   int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
 
   const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
