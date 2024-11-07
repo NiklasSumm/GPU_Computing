@@ -155,8 +155,9 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   if (bytes_per_ins == 4){
     const int* in_as_int = reinterpret_cast<const int*>(alignedIn);
     int* out_as_int = reinterpret_cast<int*>(alignedOut);
+    int index = 0;
     for (int i = 0; i < copies_per_kernel; i++){
-      int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+      index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
       if (index < num_copies){
         out_as_int[index] = in_as_int[index];
       }
@@ -166,8 +167,9 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   if (bytes_per_ins == 8){
     const int2* in_as_int2 = reinterpret_cast<const int2*>(alignedIn);
     int2* out_as_int2 = reinterpret_cast<int2*>(alignedOut);
+    int index = 0;
     for (int i = 0; i < copies_per_kernel; i++){
-      int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+      index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
       if (index < num_copies){
         out_as_int2[index] = in_as_int2[index];
       }
@@ -177,8 +179,9 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
   if (bytes_per_ins == 16){
     const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
     int4* out_as_int4 = reinterpret_cast<int4*>(alignedOut);
+    int index = 0;
     for (int i = 0; i < copies_per_kernel; i++){
-      int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+      index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
       if (index < num_copies){
         out_as_int4[index] = in_as_int4[index];
       }
@@ -220,7 +223,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   size_t alignedBytes = num_bytes - prefixBytes - postfixBytes;
 
   int num_copies = alignedBytes / bytes_per_ins;
-  const int elements_per_copy = bytes_per_ins / sizeof(T);
+  int elements_per_copy = bytes_per_ins / sizeof(T);
   int copies_per_kernel = (num_copies + num_kernels - 1) / num_kernels;
 
   const int4* in_as_int4 = reinterpret_cast<const int4*>(alignedIn);
@@ -1123,14 +1126,6 @@ float testDeviceToDeviceTransfer(unsigned int memSize) {
     //  cudaMemcpy(d_odata, d_idata, memSize, cudaMemcpyDeviceToDevice)
     //);
     copyKernel<<<blocksPerGrid, threadsPerBlock>>>(d_idata, d_odata, memSize, BYTES_PER_INST);
-
-    //err = cudaGetLastError();
-//
-    //if (err != cudaSuccess) {
-    //  fprintf(stderr, "Failed to launch copyKernel (error code %s)!\n",
-    //        cudaGetErrorString(err));
-    //  exit(EXIT_FAILURE);
-    //}
   }
 
   checkCudaErrors(cudaEventRecord(stop, 0));
