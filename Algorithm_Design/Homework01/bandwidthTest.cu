@@ -157,7 +157,7 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
     int* out_as_int = reinterpret_cast<int*>(alignedOut);
     int index = 0;
     for (int i = 0; i < copies_per_kernel; i++){
-      index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+      index = blockDim.x * blockIdx.x + threadIdx.x + i * num_kernels;
       if (index < num_copies){
         out_as_int[index] = in_as_int[index];
       }
@@ -169,7 +169,7 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
     int2* out_as_int2 = reinterpret_cast<int2*>(alignedOut);
     int index = 0;
     for (int i = 0; i < copies_per_kernel; i++){
-      index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+      index = blockDim.x * blockIdx.x + threadIdx.x + i * num_kernels;
       if (index < num_copies){
         out_as_int2[index] = in_as_int2[index];
       }
@@ -181,7 +181,7 @@ __global__ void copyKernel(const unsigned char* in, unsigned char* out, size_t n
     int4* out_as_int4 = reinterpret_cast<int4*>(alignedOut);
     int index = 0;
     for (int i = 0; i < copies_per_kernel; i++){
-      index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+      index = blockDim.x * blockIdx.x + threadIdx.x + i * num_kernels;
       if (index < num_copies){
         out_as_int4[index] = in_as_int4[index];
       }
