@@ -229,8 +229,8 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   //T* copiedElements = new T[elements_per_copy];
   //T* functionResults = new T[elements_per_copy];
 
-  T copiedElements[elements_per_copy];
-  T functionResults[elements_per_copy];
+  T copiedElements[16];
+  T functionResults[16];
 
   //int4* outValue;
   //int4* value = new int4[1];
