@@ -242,7 +242,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   int4 value;
 
   for (int i = 0; i < copies_per_kernel; i++){
-    int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
+    int index = blockDim.x * blockIdx.x + threadIdx.x + i * num_kernels;
     if (index < num_copies){
       value = in_as_int4[index];
       memcpy(copiedElements, &value, sizeof(int4));
@@ -1001,11 +1001,11 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
   checkCudaErrors(cudaMalloc((void **)&d_idata_int, memSize));
 
     //Defining important variables for copyKernel
-  int numElements = memSize / BYTES_PER_INST;
-  int threadsPerBlock = 256;
-  int blocksPerGrid = (numElements + (threadsPerBlock * COPIES_PER_THREAD) - 1) / (threadsPerBlock * COPIES_PER_THREAD);
+  //int numElements = memSize / BYTES_PER_INST;
+  //int threadsPerBlock = 256;
+  //int blocksPerGrid = (numElements + (threadsPerBlock * COPIES_PER_THREAD) - 1) / (threadsPerBlock * COPIES_PER_THREAD);
 
-  //funct f;
+  funct f;
 
   // copy host memory to device memory
   if (PINNED == memMode) {
@@ -1015,8 +1015,8 @@ float testHostToDeviceTransfer(unsigned int memSize, memoryMode memMode,
       //checkCudaErrors(
       //  cudaMemcpyAsync(d_idata, h_odata, memSize, cudaMemcpyHostToDevice, 0)
       //);
-      copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, BYTES_PER_INST);
-      //tranformKernel<int, funct><<<16,256>>>(h_odata_int, d_idata_int, memSize / sizeof(int), f);
+      //copyKernel<<<blocksPerGrid, threadsPerBlock>>>(h_odata, d_idata, memSize, BYTES_PER_INST);
+      tranformKernel<int, funct><<<16,256>>>(h_odata_int, d_idata_int, memSize / sizeof(int), f);
     }
     checkCudaErrors(cudaEventRecord(stop, 0));
     checkCudaErrors(cudaDeviceSynchronize());
