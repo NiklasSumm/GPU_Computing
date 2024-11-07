@@ -237,12 +237,14 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
     if (index < num_copies){
       value = in_as_int4[index];
       //memcpy(copiedElements, &value, sizeof(int4));
+      copiedElements = reinterpret_cast<T*>(value);
 
       for (int j = 0; j < elements_per_copy; j++){
-        //functionResults[j] = f(copiedElements[j]);
+        functionResults[j] = f(copiedElements[j]);
       }
 
       //memcpy(&outValue, functionResults, sizeof(int4));
+      outValue = reinterpret_cast<int4>(functionResults);
       out_as_int4[index] = outValue;
     }
   }
