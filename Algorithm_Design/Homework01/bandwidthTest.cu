@@ -235,7 +235,7 @@ __global__ void tranformKernel(const T* in, T* out, size_t num_elements, Functor
   for (int i = 0; i < copies_per_kernel; i++){
     int index = copies_per_kernel * (blockDim.x * blockIdx.x + threadIdx.x) + i;
     if (index < num_copies){
-      value = in_as_int4[index];
+      value[0] = in_as_int4[index];
       //memcpy(copiedElements, &value, sizeof(int4));
       copiedElements = reinterpret_cast<T*>(value);
 
