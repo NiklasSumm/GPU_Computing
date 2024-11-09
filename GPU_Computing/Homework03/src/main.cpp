@@ -35,7 +35,7 @@ void printHelp(char *);
 //
 
 
-extern void globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim /*TODO Parameters*/);
+extern void globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim, int* out, const int* in, int size_in_bytes);
 extern void globalMemStrideKernel_Wrapper(dim3 gridDim, dim3 blockDim /*TODO Parameters*/);
 extern void globalMemOffsetKernel_Wrapper(dim3 gridDim, dim3 blockDim /*TODO Parameters*/);
 
