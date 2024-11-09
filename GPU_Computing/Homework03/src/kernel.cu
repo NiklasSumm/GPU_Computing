@@ -30,15 +30,12 @@ globalMemCoalescedKernel(int* out, const int* in, int size_in_bytes)
 
     int size = size_in_bytes / sizeof(int);
 
-    printf("Size in bytes: %i ", size_in_bytes);
-    printf("Size in int: %i \n", size);
-
     int copies_per_kernel = size + num_kernels - 1 / num_kernels;
 
     for (int i = 0; i < copies_per_kernel; i++){
         int index =  blockIdx.x * blockDim.x + threadIdx.x + i * num_kernels;
         if (index < size){
-            out[index] = in[index];
+            out[index] = 1;
         }
     }
 }
