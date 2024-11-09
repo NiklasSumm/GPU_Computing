@@ -143,6 +143,8 @@ main ( int argc, char * argv[] )
     } else { // Pinned
         std::cout << "***" << " Using pinned memory" << std::endl;
         // Allocation of pinned host memory
+        cudaMallocHost( (void**) &h_memoryA, static_cast <size_t> ( optMemorySize ));
+        cudaMallocHost( (void**) &h_memoryB, static_cast <size_t> ( optMemorySize ));
     }
 
     //
@@ -173,6 +175,7 @@ main ( int argc, char * argv[] )
     memCpyH2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // H2D copy
+        globalMemCoalescedKernel<<<grid_dim, block_dim>>>(d_memoryA, h_memoryA, optMemorySize);
     }
     memCpyH2DTimer.stop ();
 
@@ -180,6 +183,7 @@ main ( int argc, char * argv[] )
     memCpyD2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // D2D copy
+        globalMemCoalescedKernel<<<grid_dim, block_dim>>>(d_memoryB, d_memoryA, optMemorySize);
     }
     memCpyD2DTimer.stop ();
 
@@ -187,6 +191,7 @@ main ( int argc, char * argv[] )
     memCpyD2HTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // D2H copy
+        globalMemCoalescedKernel<<<grid_dim, block_dim>>>(h_memoryB, d_memoryB, optMemorySize);
     }
     memCpyD2HTimer.stop ();
 
