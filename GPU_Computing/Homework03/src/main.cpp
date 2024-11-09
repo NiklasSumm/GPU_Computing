@@ -182,8 +182,8 @@ main ( int argc, char * argv[] )
     memCpyD2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // D2D copy
-        globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryB, d_memoryA, optMemorySize);
-        cudaDeviceSynchronize();
+        //globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryB, d_memoryA, optMemorySize);
+        //cudaDeviceSynchronize();
     }
     memCpyD2DTimer.stop ();
 
@@ -191,8 +191,8 @@ main ( int argc, char * argv[] )
     memCpyD2HTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // D2H copy
-        globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, h_memoryB, d_memoryB, optMemorySize);
-        cudaDeviceSynchronize();
+        //globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, h_memoryB, d_memoryB, optMemorySize);
+        //cudaDeviceSynchronize();
     }
     memCpyD2HTimer.stop ();
 
