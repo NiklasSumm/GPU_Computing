@@ -15,9 +15,20 @@
 //
 
 __global__ void 
-globalMemCoalescedKernel(/*TODO Parameters*/)
+globalMemCoalescedKernel(int* out, const int* in, int size_in_bytes)
 {
-    /*TODO Kernel Code*/
+    int num_kernels = blockDim.x * gridDim.x;
+
+    int size = size_in_bytes / sizeof(int);
+
+    int copies_per_kernel = size + num_kernels - 1 / num_kernels;
+
+    for (int i = 0; i < copies_per_kernel; i++){
+        int index =  blockIdx.x * blockDim.x + threadIdx.x + i * copies_per_kernel;
+        if (index < size){
+            out[index] = in[index];
+        }
+    }
 }
 
 void 
