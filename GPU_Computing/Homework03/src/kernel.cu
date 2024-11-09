@@ -24,7 +24,7 @@ globalMemCoalescedKernel(int* out, const int* in, int size_in_bytes)
     int copies_per_kernel = size + num_kernels - 1 / num_kernels;
 
     for (int i = 0; i < copies_per_kernel; i++){
-        int index =  blockIdx.x * blockDim.x + threadIdx.x + i * copies_per_kernel;
+        int index =  blockIdx.x * blockDim.x + threadIdx.x + i * num_kernels;
         if (index < size){
             out[index] = in[index];
         }
