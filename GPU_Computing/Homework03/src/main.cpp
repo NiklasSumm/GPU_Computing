@@ -169,15 +169,13 @@ main ( int argc, char * argv[] )
     chCommandLineGet <int> ( &optMemCpyIterations, "memory-copy-iterations", argc, argv );
     optMemCpyIterations = optMemCpyIterations != 0 ? optMemCpyIterations : 1;
 
-    cudaDeviceSynchronize();
-
     // Host To Device
     memCpyH2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // H2D copy
         globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryA, h_memoryA, optMemorySize);
+        cudaDeviceSynchronize();
     }
-    cudaDeviceSynchronize();
     memCpyH2DTimer.stop ();
 
     // Device To Device
@@ -185,8 +183,8 @@ main ( int argc, char * argv[] )
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // D2D copy
         globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryB, d_memoryA, optMemorySize);
+        cudaDeviceSynchronize();
     }
-    cudaDeviceSynchronize();
     memCpyD2DTimer.stop ();
 
     // Device To Host
@@ -194,8 +192,8 @@ main ( int argc, char * argv[] )
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // D2H copy
         globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, h_memoryB, d_memoryB, optMemorySize);
+        cudaDeviceSynchronize();
     }
-    cudaDeviceSynchronize();
     memCpyD2HTimer.stop ();
 
     //
