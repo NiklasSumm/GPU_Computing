@@ -176,7 +176,8 @@ main ( int argc, char * argv[] )
     memCpyH2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // H2D copy
-        globalMemCoalescedKernel<<<grid_dim, block_dim>>>(d_memoryA, h_memoryA, optMemorySize);
+        //globalMemCoalescedKernel<<<grid_dim, block_dim>>>(d_memoryA, h_memoryA, optMemorySize);
+        globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryA, h_memoryA, optMemorySize);
     }
     memCpyH2DTimer.stop ();
 
@@ -184,7 +185,8 @@ main ( int argc, char * argv[] )
     memCpyD2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // D2D copy
-        globalMemCoalescedKernel<<<grid_dim, block_dim>>>(d_memoryB, d_memoryA, optMemorySize);
+        //globalMemCoalescedKernel<<<grid_dim, block_dim>>>(d_memoryB, d_memoryA, optMemorySize);
+        globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryB, d_memoryA, optMemorySize);
     }
     memCpyD2DTimer.stop ();
 
@@ -192,7 +194,8 @@ main ( int argc, char * argv[] )
     memCpyD2HTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // D2H copy
-        globalMemCoalescedKernel<<<grid_dim, block_dim>>>(h_memoryB, d_memoryB, optMemorySize);
+        //globalMemCoalescedKernel<<<grid_dim, block_dim>>>(h_memoryB, d_memoryB, optMemorySize);
+        globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, h_memoryB, d_memoryB, optMemorySize);
     }
     memCpyD2HTimer.stop ();
 
