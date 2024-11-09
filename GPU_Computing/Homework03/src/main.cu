@@ -34,8 +34,30 @@ void printHelp(char *);
 // Kernel Wrappers
 //
 
+__global__ void 
+globalMemCoalescedKernel(int* out, const int* in, int size_in_bytes)
+{
+    int num_kernels = blockDim.x * gridDim.x;
 
-extern void globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim, int* out, const int* in, int size_in_bytes);
+    int size = size_in_bytes / sizeof(int);
+
+    int copies_per_kernel = size + num_kernels - 1 / num_kernels;
+
+    for (int i = 0; i < copies_per_kernel; i++){
+        int index =  blockIdx.x * blockDim.x + threadIdx.x + i * num_kernels;
+        if (index < size){
+            out[index] = in[index];
+        }
+    }
+}
+
+void 
+globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim, int* out, const int* in, int size_in_bytes) {
+	globalMemCoalescedKernel<<< gridDim, blockDim, 0 /*Shared Memory Size*/ >>>( out, in, size_in_bytes );
+}
+
+
+//extern void globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim, int* out, const int* in, int size_in_bytes);
 extern void globalMemStrideKernel_Wrapper(dim3 gridDim, dim3 blockDim /*TODO Parameters*/);
 extern void globalMemOffsetKernel_Wrapper(dim3 gridDim, dim3 blockDim /*TODO Parameters*/);
 
