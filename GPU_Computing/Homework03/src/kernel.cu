@@ -10,6 +10,15 @@
  *
  *************************************************************************************************/
 
+#include <iostream>
+#include <iomanip>
+#include <cstdlib>
+#include <chCommandLine.h>
+#include <chTimer.hpp>
+#include <stdio.h>
+#include <assert.h>
+#include <cuda_runtime.h>
+
 //
 // Kernels
 //
@@ -20,6 +29,9 @@ globalMemCoalescedKernel(int* out, const int* in, int size_in_bytes)
     int num_kernels = blockDim.x * gridDim.x;
 
     int size = size_in_bytes / sizeof(int);
+
+    printf("Size in bytes: %i ", size_in_bytes);
+    printf("Size in int: %i \n", size);
 
     int copies_per_kernel = size + num_kernels - 1 / num_kernels;
 
