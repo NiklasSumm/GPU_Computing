@@ -175,6 +175,7 @@ main ( int argc, char * argv[] )
         // H2D copy
         globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryA, h_memoryA, optMemorySize);
     }
+    cudaDeviceSynchronize();
     memCpyH2DTimer.stop ();
 
     // Device To Device
@@ -183,6 +184,7 @@ main ( int argc, char * argv[] )
         // D2D copy
         globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryB, d_memoryA, optMemorySize);
     }
+    cudaDeviceSynchronize();
     memCpyD2DTimer.stop ();
 
     // Device To Host
@@ -191,6 +193,7 @@ main ( int argc, char * argv[] )
         // D2H copy
         globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, h_memoryB, d_memoryB, optMemorySize);
     }
+    cudaDeviceSynchronize();
     memCpyD2HTimer.stop ();
 
     //
