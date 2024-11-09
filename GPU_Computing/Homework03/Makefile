@@ -13,5 +13,5 @@ clean:
 .PHONY: rebuild
 rebuild: clean build
 
-./bin/memCpy: ./src/main.cu ./src/kernel.cu
+./bin/memCpy: ./src/main.cpp ./src/kernel.cu
 	$(NVCC) -O2 --compiler-options "-O2 -Wall -Wextra" -o $@ $^ $(INC) $(LIB)
