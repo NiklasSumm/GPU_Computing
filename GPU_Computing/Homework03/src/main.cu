@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <cuda_runtime.h>
-#include <../src/kernel.cu>
+//#include <../src/kernel.cu>
 
 const static int DEFAULT_MEM_SIZE       = 10*1024*1024; // 10 MB
 const static int DEFAULT_NUM_ITERATIONS =         1000;
