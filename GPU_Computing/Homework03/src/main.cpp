@@ -169,6 +169,8 @@ main ( int argc, char * argv[] )
     chCommandLineGet <int> ( &optMemCpyIterations, "memory-copy-iterations", argc, argv );
     optMemCpyIterations = optMemCpyIterations != 0 ? optMemCpyIterations : 1;
 
+    cudaDeviceSynchronize();
+
     // Host To Device
     memCpyH2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
