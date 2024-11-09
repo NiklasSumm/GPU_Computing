@@ -35,7 +35,7 @@ void printHelp(char *);
 //
 
 __global__ void 
-globalMemCoalescedKernel(int* out, const int* in, int size_in_bytes)
+globalMemCoalescedKernel(int* out, int* in, int size_in_bytes)
 {
     int num_kernels = blockDim.x * gridDim.x;
 
@@ -53,7 +53,7 @@ globalMemCoalescedKernel(int* out, const int* in, int size_in_bytes)
 }
 
 void 
-globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim, int* out, const int* in, int size_in_bytes) {
+globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim, int* out, int* in, int size_in_bytes) {
 	globalMemCoalescedKernel<<< gridDim, blockDim, 0 /*Shared Memory Size*/ >>>( out, in, size_in_bytes );
 }
 
