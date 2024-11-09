@@ -27,6 +27,7 @@ globalMemCoalescedKernel(int* out, const int* in, int size_in_bytes)
         int index =  blockIdx.x * blockDim.x + threadIdx.x + i * num_kernels;
         if (index < size){
             out[index] = in[index];
+            printf(" %i ", i);
         }
     }
 }
