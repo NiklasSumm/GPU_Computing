@@ -219,7 +219,7 @@ main ( int argc, char * argv[] )
         //
         if ( chCommandLineGetBool ( "global-coalesced", argc, argv ) ) {
 			
-            globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryA, h_memoryA, optMemorySize);
+            globalMemCoalescedKernel_Wrapper(grid_dim, block_dim);
         } else if ( chCommandLineGetBool ( "global-stride", argc, argv ) ) {
             globalMemStrideKernel_Wrapper(grid_dim, block_dim /*TODO Parameters*/);
         } else if ( chCommandLineGetBool ( "global-offset", argc, argv ) ) {
