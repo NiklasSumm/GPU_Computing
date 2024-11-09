@@ -18,7 +18,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include <cuda_runtime.h>
-//#include <../src/kernel.cu>
 
 const static int DEFAULT_MEM_SIZE       = 10*1024*1024; // 10 MB
 const static int DEFAULT_NUM_ITERATIONS =         1000;
@@ -34,31 +33,8 @@ void printHelp(char *);
 // Kernel Wrappers
 //
 
-__global__ void 
-globalMemCoalescedKernel(int* out, int* in, int size_in_bytes)
-{
-    int num_kernels = blockDim.x * gridDim.x;
 
-    int size = size_in_bytes / sizeof(int);
-
-    int copies_per_kernel = size + num_kernels - 1 / num_kernels;
-
-    for (int i = 0; i < copies_per_kernel; i++){
-        int index =  blockIdx.x * blockDim.x + threadIdx.x + i * num_kernels;
-        if (index < size){
-		printf(" %i ", i);
-            out[index] = in[index];
-        }
-    }
-}
-
-void 
-globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim, int* out, int* in, int size_in_bytes) {
-	globalMemCoalescedKernel<<< gridDim, blockDim, 0 /*Shared Memory Size*/ >>>( out, in, size_in_bytes );
-}
-
-
-//extern void globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim, int* out, const int* in, int size_in_bytes);
+extern void globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim, int* out, const int* in, int size_in_bytes);
 extern void globalMemStrideKernel_Wrapper(dim3 gridDim, dim3 blockDim /*TODO Parameters*/);
 extern void globalMemOffsetKernel_Wrapper(dim3 gridDim, dim3 blockDim /*TODO Parameters*/);
 
@@ -167,8 +143,6 @@ main ( int argc, char * argv[] )
     } else { // Pinned
         std::cout << "***" << " Using pinned memory" << std::endl;
         // Allocation of pinned host memory
-        cudaMallocHost( (void**) &h_memoryA, static_cast <size_t> ( optMemorySize ));
-        cudaMallocHost( (void**) &h_memoryB, static_cast <size_t> ( optMemorySize ));
     }
 
     //
@@ -195,32 +169,26 @@ main ( int argc, char * argv[] )
     chCommandLineGet <int> ( &optMemCpyIterations, "memory-copy-iterations", argc, argv );
     optMemCpyIterations = optMemCpyIterations != 0 ? optMemCpyIterations : 1;
 
-	printf("Host To Device");
     // Host To Device
     memCpyH2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // H2D copy
-        //globalMemCoalescedKernel<<<grid_dim, block_dim>>>(d_memoryA, h_memoryA, optMemorySize);
-        globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryA, h_memoryA, optMemorySize);
+        lobalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryA, h_memoryA, optMemorySize);
     }
     memCpyH2DTimer.stop ();
 
-	printf("Device To Device");
     // Device To Device
     memCpyD2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // D2D copy
-        //globalMemCoalescedKernel<<<grid_dim, block_dim>>>(d_memoryB, d_memoryA, optMemorySize);
         globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryB, d_memoryA, optMemorySize);
     }
     memCpyD2DTimer.stop ();
 
-	printf("Device To Host");
     // Device To Host
     memCpyD2HTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
         // D2H copy
-        //globalMemCoalescedKernel<<<grid_dim, block_dim>>>(h_memoryB, d_memoryB, optMemorySize);
         globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, h_memoryB, d_memoryB, optMemorySize);
     }
     memCpyD2HTimer.stop ();
@@ -248,7 +216,7 @@ main ( int argc, char * argv[] )
         //
         if ( chCommandLineGetBool ( "global-coalesced", argc, argv ) ) {
 			
-            globalMemCoalescedKernel_Wrapper(grid_dim, block_dim, d_memoryA, h_memoryA, optMemorySize);
+            //globalMemCoalescedKernel_Wrapper(grid_dim, block_dim /*TODO Parameters*/);
         } else if ( chCommandLineGetBool ( "global-stride", argc, argv ) ) {
             globalMemStrideKernel_Wrapper(grid_dim, block_dim /*TODO Parameters*/);
         } else if ( chCommandLineGetBool ( "global-offset", argc, argv ) ) {
