@@ -32,8 +32,8 @@ globalMemCoalescedKernel(int* out, const int* in, int size_in_bytes)
 }
 
 void 
-globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim /*TODO Parameters*/) {
-	globalMemCoalescedKernel<<< gridDim, blockDim, 0 /*Shared Memory Size*/ >>>( /*TODO Parameters*/);
+globalMemCoalescedKernel_Wrapper(dim3 gridDim, dim3 blockDim, int* out, const int* in, int size_in_bytes) {
+	globalMemCoalescedKernel<<< gridDim, blockDim, 0 /*Shared Memory Size*/ >>>( out, in, size_in_bytes);
 }
 
 __global__ void 
