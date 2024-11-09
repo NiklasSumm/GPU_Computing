@@ -194,6 +194,7 @@ main ( int argc, char * argv[] )
     chCommandLineGet <int> ( &optMemCpyIterations, "memory-copy-iterations", argc, argv );
     optMemCpyIterations = optMemCpyIterations != 0 ? optMemCpyIterations : 1;
 
+	printf("Host To Device");
     // Host To Device
     memCpyH2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
@@ -203,6 +204,7 @@ main ( int argc, char * argv[] )
     }
     memCpyH2DTimer.stop ();
 
+	printf("Device To Device");
     // Device To Device
     memCpyD2DTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
@@ -212,6 +214,7 @@ main ( int argc, char * argv[] )
     }
     memCpyD2DTimer.stop ();
 
+	printf("Device To Host");
     // Device To Host
     memCpyD2HTimer.start ();
     for ( int i = 0; i < optMemCpyIterations; i ++ ) {
