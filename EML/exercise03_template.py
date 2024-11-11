@@ -113,6 +113,11 @@ def main():
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
 
+    if use_cuda:
+        print("Using cuda device!")
+    else:
+        print ("Not using cuda device!")
+
     torch.manual_seed(args.seed)
 
     device = torch.device("cuda" if use_cuda else "cpu")
