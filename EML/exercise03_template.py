@@ -191,10 +191,10 @@ def main():
         data_time.append({"Time": current_time, "Accuracy": accuracy})
         data_epoch.append({"Epoch": epoch, "Accuracy": accuracy})
 
-    if (args.no_cuda):
-        processor = "CPU"
-    else:
+    if (use_cuda):
         processor = "GPU"
+    else:
+        processor = "CPU"
 
     with open(args.model + "_" + args.dataset + "_" + processor + "_" + "lr" + str(args.lr) + "_" + args.optimizer + "_time.csv", 'w', newline='') as csvfile:
         fieldnames = ["Time", "Accuracy"]
@@ -207,49 +207,6 @@ def main():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data_epoch)
-
-
-
-
-    #timeChart = QuickChart()
-    #timeChart.width = 500
-    #timeChart.height = 300
-    #timeChart.device_pixel_ratio = 2.0
-    #timeChart.config = {
-    #    "type": "line",
-    #    "data": {
-    #        "datasets": [
-    #          {
-    #            "label": 'Accuracy',
-    #            "data": data_time,
-    #          },
-    #        ],
-    #    },
-    #}
-#
-    #epochChart = QuickChart()
-    #epochChart.width = 500
-    #epochChart.height = 300
-    #epochChart.device_pixel_ratio = 2.0
-    #epochChart.config = {
-    #    "type": "line",
-    #    "data": {
-    #        "datasets": [
-    #          {
-    #            "label": 'Accuracy',
-    #            "data": data_epoch,
-    #          },
-    #        ],
-    #    },
-    #}
-#
-    ## Print a chart URL
-    ##print(timeChart.get_url())
-#
-    ## Print a short chart URL
-    #print(timeChart.get_short_url())  
-#
-    #print(epochChart.get_short_url())  
 
 
 if __name__ == '__main__':
