@@ -118,6 +118,8 @@ def main():
                         help='Define the model (MLP or CNN)')
     parser.add_argument('--dataset', type=str, default="MNIST", metavar='D',
                         help='Define the dataset (MNIST or CIFAR)')
+    parser.add_argument('--optimizer', type=str, default="SGD", metavar='O',
+                        help='Define the dataset (SGD or ADAM or ADAGRAD)')
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -171,7 +173,12 @@ def main():
         model = MLP(input_size).to(device)
         print("Using MLP")
 
-    optimizer = optim.SGD(model.parameters(), lr=args.lr)
+    if args.optimizer == "ADAM":
+        optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    elif args.optimizer == "ADAGRAD":
+        optimizer = optim.Adagrad(model.parameters(), lr=args.lr)
+    else:
+        optimizer = optim.SGD(model.parameters(), lr=args.lr)
 
     start = time.time()
     data_time = []
@@ -184,13 +191,18 @@ def main():
         data_time.append({"Time": current_time, "Accuracy": accuracy})
         data_epoch.append({"Epoch": epoch, "Accuracy": accuracy})
 
-    with open(args.model + "_" + args.dataset + "_" + "time.csv", 'w', newline='') as csvfile:
+    if (args.no_cuda):
+        processor = "CPU"
+    else:
+        processor = "GPU"
+
+    with open(args.model + "_" + args.dataset + "_" + processor + "_" + "lr" + str(args.lr) + "_" + args.optimizer + "_time.csv", 'w', newline='') as csvfile:
         fieldnames = ["Time", "Accuracy"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data_time)
 
-    with open(args.model + "_" + args.dataset + "_" + "epoch.csv", 'w', newline='') as csvfile:
+    with open(args.model + "_" + args.dataset + "_" + processor + "_" + "lr" + str(args.lr) + "_" + args.optimizer + "_epoch.csv", 'w', newline='') as csvfile:
         fieldnames = ["Epoch", "Accuracy"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
