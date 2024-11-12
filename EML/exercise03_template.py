@@ -134,20 +134,27 @@ def main():
                        'shuffle': True}
         train_kwargs.update(cuda_kwargs)
         test_kwargs.update(cuda_kwargs)
-
-    transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-        ])
     
     if args.dataset == "CIFAR":
-        dataset_train = datasets.CIFAR10('../data', train=True, download=True)
-        dataset_test = datasets.CIFAR10('../data', train=False)
+        transform=transforms.Compose([
+            transforms.ToTensor(),
+        ])
+        dataset_train = datasets.CIFAR10('../data', train=True, download=True,
+                        transform=transform)
+        dataset_test = datasets.CIFAR10('../data', train=False,
+                        transform=transform)
+        print("Using CIFAR-10 dataset")
     else:
+        transform=transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
         dataset_train = datasets.MNIST('../data', train=True, download=True,
-                       transform=transform)
+                        transform=transform)
         dataset_test = datasets.MNIST('../data', train=False,
-                       transform=transform)
+                        transform=transform)
+        print("Using MNIST dataset")
+
     train_loader = torch.utils.data.DataLoader(dataset_train,**train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset_test, **test_kwargs)
 
