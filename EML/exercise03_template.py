@@ -9,9 +9,9 @@ from torch.optim.lr_scheduler import StepLR
 
 # TODO: Implement the MLP class, to be equivalent to the MLP from the last exercise!
 class MLP(nn.Module):
-    def __init__(self):
+    def __init__(self, input_size):
         super().__init__()
-        self.linear0 = nn.Linear(32*32*3, 512)
+        self.linear0 = nn.Linear(input_size, 512)
         self.relu0 = nn.ReLU()
         self.linear1 = nn.Linear(512, 128)
         self.relu1 = nn.ReLU()
@@ -143,6 +143,7 @@ def main():
                         transform=transform)
         dataset_test = datasets.CIFAR10('../data', train=False,
                         transform=transform)
+        input_size = 32*32*3
         print("Using CIFAR-10 dataset")
     else:
         transform=transforms.Compose([
@@ -153,6 +154,7 @@ def main():
                         transform=transform)
         dataset_test = datasets.MNIST('../data', train=False,
                         transform=transform)
+        input_size = 28*28
         print("Using MNIST dataset")
 
     train_loader = torch.utils.data.DataLoader(dataset_train,**train_kwargs)
@@ -162,7 +164,7 @@ def main():
         model = CNN().to(device)
         print("Using CNN")
     else:
-        model = MLP().to(device)
+        model = MLP(input_size).to(device)
         print("Using MLP")
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
