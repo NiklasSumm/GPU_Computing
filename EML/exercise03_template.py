@@ -11,7 +11,7 @@ from torch.optim.lr_scheduler import StepLR
 class MLP(nn.Module):
     def __init__(self):
         super().__init__()
-        self.linear0 = nn.Linear(28*28, 512)
+        self.linear0 = nn.Linear(32*32*3, 512)
         self.relu0 = nn.ReLU()
         self.linear1 = nn.Linear(512, 128)
         self.relu1 = nn.ReLU()
