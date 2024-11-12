@@ -1,13 +1,13 @@
 from __future__ import print_function
 import argparse
 import time
+import csv
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
-from quickchart import QuickChart
 
 # TODO: Implement the MLP class, to be equivalent to the MLP from the last exercise!
 class MLP(nn.Module):
@@ -181,48 +181,63 @@ def main():
         train(args, model, device, train_loader, optimizer, epoch)
         accuracy = test(model, device, test_loader)
         current_time = time.time() - start
-        data_time.append({current_time, accuracy})
-        data_epoch.append({epoch, accuracy})
+        data_time.append({"Time": current_time, "Accuracy": accuracy})
+        data_epoch.append({"Epoch": epoch, "Accuracy": accuracy})
 
-    timeChart = QuickChart()
-    timeChart.width = 500
-    timeChart.height = 300
-    timeChart.device_pixel_ratio = 2.0
-    timeChart.config = {
-        "type": "line",
-        "data": {
-            "datasets": [
-              {
-                "label": 'Accuracy',
-                "data": data_time,
-              },
-            ],
-        },
-    }
+    with open(args.model + "_" + args.dataset + "_" + "time.csv", 'w', newline='') as csvfile:
+        fieldnames = ["Time", "Accuracy"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(data_time)
 
-    epochChart = QuickChart()
-    epochChart.width = 500
-    epochChart.height = 300
-    epochChart.device_pixel_ratio = 2.0
-    epochChart.config = {
-        "type": "line",
-        "data": {
-            "datasets": [
-              {
-                "label": 'Accuracy',
-                "data": data_epoch,
-              },
-            ],
-        },
-    }
+    with open(args.model + "_" + args.dataset + "_" + "epoch.csv", 'w', newline='') as csvfile:
+        fieldnames = ["Epoch", "Accuracy"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(data_epoch)
 
-    # Print a chart URL
-    #print(timeChart.get_url())
 
-    # Print a short chart URL
-    print(timeChart.get_short_url())  
 
-    print(epochChart.get_short_url())  
+
+    #timeChart = QuickChart()
+    #timeChart.width = 500
+    #timeChart.height = 300
+    #timeChart.device_pixel_ratio = 2.0
+    #timeChart.config = {
+    #    "type": "line",
+    #    "data": {
+    #        "datasets": [
+    #          {
+    #            "label": 'Accuracy',
+    #            "data": data_time,
+    #          },
+    #        ],
+    #    },
+    #}
+#
+    #epochChart = QuickChart()
+    #epochChart.width = 500
+    #epochChart.height = 300
+    #epochChart.device_pixel_ratio = 2.0
+    #epochChart.config = {
+    #    "type": "line",
+    #    "data": {
+    #        "datasets": [
+    #          {
+    #            "label": 'Accuracy',
+    #            "data": data_epoch,
+    #          },
+    #        ],
+    #    },
+    #}
+#
+    ## Print a chart URL
+    ##print(timeChart.get_url())
+#
+    ## Print a short chart URL
+    #print(timeChart.get_short_url())  
+#
+    #print(epochChart.get_short_url())  
 
 
 if __name__ == '__main__':
