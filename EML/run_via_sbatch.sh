@@ -11,4 +11,4 @@ eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate eml
 
 echo "Running exercise03_template.py"
-python exercise03_template.py --epochs 30 --model CNN --dataset CIFAR
+python exercise03_template.py --epochs 30 --model MLP --dataset CIFAR
