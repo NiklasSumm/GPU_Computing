@@ -110,6 +110,10 @@ def main():
                         help='random seed (default: 1)')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                         help='how many batches to wait before logging training status')
+    parser.add_argument('--model', type=str, default="MLP", metavar='M',
+                        help='Define the model (MLP or CNN)')
+    parser.add_argument('--dataset', type=str, default="MNIST", metavar='D',
+                        help='Define the dataset (MNIST or CIFAR)')
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -135,14 +139,24 @@ def main():
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
         ])
-    dataset_train = datasets.MNIST('../data', train=True, download=True,
+    
+    if args.dataset == "CIFAR":
+        dataset_train = datasets.CIFAR10('../data', train=True, download=True)
+        dataset_test = datasets.CIFAR10('../data', train=False)
+    else:
+        dataset_train = datasets.MNIST('../data', train=True, download=True,
                        transform=transform)
-    dataset_test = datasets.MNIST('../data', train=False,
+        dataset_test = datasets.MNIST('../data', train=False,
                        transform=transform)
     train_loader = torch.utils.data.DataLoader(dataset_train,**train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset_test, **test_kwargs)
 
-    model = MLP().to(device)
+    if args.model == "CNN":
+        model = CNN().to(device)
+        print("Using CNN")
+    else:
+        model = MLP().to(device)
+        print("Using MLP")
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr)
 
