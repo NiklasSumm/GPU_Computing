@@ -73,8 +73,14 @@ bool fdtdGPU(float *output, const float *input, const float *coeff,
   dim3 dimBlock;
   dim3 dimGrid;
 
+  int boundary = 128;
+  if (checkCmdLineFlag(argc, argv, "boundary")) {
+    boundary = getCmdLineArgumentInt(argc, argv, "boundary");
+  }
+  printf("Boundary: %i\n", boundary)
+
   // Ensure that the inner data starts on a 128B boundary
-  const int padding = (128 / sizeof(float)) - radius;
+  const int padding = (boundary / sizeof(float)) - radius;
   const size_t paddedVolumeSize = volumeSize + padding;
 
 #ifdef GPU_PROFILING
