@@ -77,7 +77,7 @@ bool fdtdGPU(float *output, const float *input, const float *coeff,
   if (checkCmdLineFlag(argc, argv, "boundary")) {
     boundary = getCmdLineArgumentInt(argc, argv, "boundary");
   }
-  printf("Boundary: %i\n", boundary)
+  printf("Boundary: %i\n", boundary);
 
   // Ensure that the inner data starts on a 128B boundary
   const int padding = (boundary / sizeof(float)) - radius;
