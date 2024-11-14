@@ -179,8 +179,8 @@ bool runTest(int argc, const char **argv) {
   }
 
   if (checkCmdLineFlag(argc, argv, "radius")) {
-    radius = CLAMP(getCmdLineArgumentInt(argc, argv, "radius"), k_radius_min,
-                   k_radius_max);
+    radius = CLAMP(getCmdLineArgumentInt(argc, argv, "radius"), 1,
+                   10);
   }
 
   if (checkCmdLineFlag(argc, argv, "timesteps")) {
