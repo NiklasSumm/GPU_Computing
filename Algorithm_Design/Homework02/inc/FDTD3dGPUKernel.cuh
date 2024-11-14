@@ -139,7 +139,7 @@ __global__ void FiniteDifferencesKernel(float *output, const float *input,
     behind[0] = current;
     current = infront[0];
 
-    UnrollerL<0, Radius>::step( [&] (int i){
+    UnrollerL<0, Radius>::step( [&] (int i)){
       infront[i] = infront[i + 1];
     }
     //for (int i = 0; i < Radius - 1; i++) infront[i] = infront[i + 1];
