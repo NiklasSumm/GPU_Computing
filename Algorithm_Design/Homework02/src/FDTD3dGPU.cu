@@ -136,7 +136,7 @@ bool fdtdGPU(float *output, const float *input, const float *coeff,
 
   // Check the device limit on the number of threads
   struct cudaFuncAttributes funcAttrib;
-  checkCudaErrors(cudaFuncGetAttributes(&funcAttrib, FiniteDifferencesKernel));
+  checkCudaErrors(cudaFuncGetAttributes(&funcAttrib, FiniteDifferencesKernel<10>));
 
   userBlockSize = MIN(userBlockSize, funcAttrib.maxThreadsPerBlock);
 
