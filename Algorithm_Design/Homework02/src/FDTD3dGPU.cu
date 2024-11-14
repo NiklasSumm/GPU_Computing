@@ -154,9 +154,9 @@ bool fdtdGPU(float *output, const float *input, const float *coeff,
   printf(" set grid size to %dx%d\n", dimGrid.x, dimGrid.y);
 
   // Check the block size is valid
-  if (dimBlock.x < RADIUS || dimBlock.y < RADIUS) {
+  if (dimBlock.x < radius || dimBlock.y < radius) {
     printf("invalid block size, x (%d) and y (%d) must be >= radius (%d).\n",
-           dimBlock.x, dimBlock.y, RADIUS);
+           dimBlock.x, dimBlock.y, radius);
     exit(EXIT_FAILURE);
   }
 
