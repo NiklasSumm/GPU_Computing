@@ -29,23 +29,40 @@
 #include <cooperative_groups.h>
 
 /// Helper macros for stringification
-#define TO_STRING_HELPER(X)   #X
-#define TO_STRING(X)          TO_STRING_HELPER(X)
+//#define TO_STRING_HELPER(X)   #X
+//#define TO_STRING(X)          TO_STRING_HELPER(X)
+//
+//// Define loop unrolling depending on the compiler
+//#if defined(__ICC) || defined(__ICL)
+//  #define UNROLL_LOOP(n)      _Pragma(TO_STRING(unroll (n)))
+//#elif defined(__clang__)
+//  #define UNROLL_LOOP(n)      _Pragma(TO_STRING(unroll (n)))
+//#elif defined(__GNUC__) && !defined(__clang__)
+//  #define UNROLL_LOOP(n)      _Pragma(TO_STRING(GCC unroll (16)))
+//#elif defined(_MSC_BUILD)
+//  #pragma message ("Microsoft Visual C++ (MSVC) detected: Loop unrolling not supported!")
+//  #define UNROLL_LOOP(n)
+//#else
+//  #warning "Unknown compiler: Loop unrolling not supported!"
+//  #define UNROLL_LOOP(n)
+//#endif
 
-// Define loop unrolling depending on the compiler
-#if defined(__ICC) || defined(__ICL)
-  #define UNROLL_LOOP(n)      _Pragma(TO_STRING(unroll (n)))
-#elif defined(__clang__)
-  #define UNROLL_LOOP(n)      _Pragma(TO_STRING(unroll (n)))
-#elif defined(__GNUC__) && !defined(__clang__)
-  #define UNROLL_LOOP(n)      _Pragma(TO_STRING(GCC unroll (16)))
-#elif defined(_MSC_BUILD)
-  #pragma message ("Microsoft Visual C++ (MSVC) detected: Loop unrolling not supported!")
-  #define UNROLL_LOOP(n)
-#else
-  #warning "Unknown compiler: Loop unrolling not supported!"
-  #define UNROLL_LOOP(n)
-#endif
+template<int Begin, int End, int Step = 1>
+//lambda unroller
+struct UnrollerL {
+    template<typename Lambda>
+    static void step(Lambda& func) {
+        func(Begin);
+        UnrollerL<Begin+Step, End, Step>::step(func);
+    }
+};
+//end of lambda unroller
+template<int End, int Step>
+struct UnrollerL<End, End, Step> {
+    template<typename Lambda>
+    static void step(Lambda& func) {
+    }
+};
 
 namespace cg = cooperative_groups;
 
@@ -113,7 +130,7 @@ __global__ void FiniteDifferencesKernel(float *output, const float *input,
   }
 
 // Step through the xy-planes
-#pragma unroll 9
+//#pragma unroll 9
 
   for (int iz = 0; iz < dimz; iz++) {
     // Advance the slice (move the thread-front)
@@ -122,8 +139,10 @@ __global__ void FiniteDifferencesKernel(float *output, const float *input,
     behind[0] = current;
     current = infront[0];
 
-    UNROLL_LOOP(Radius)
-    for (int i = 0; i < Radius - 1; i++) infront[i] = infront[i + 1];
+    UnrollerL<0, Radius>::step( [&] (int i){
+      infront[i] = infront[i + 1];
+    }
+    //for (int i = 0; i < Radius - 1; i++) infront[i] = infront[i + 1];
 
     if (validr) infront[Radius - 1] = input[inputIndex];
 
@@ -157,12 +176,16 @@ __global__ void FiniteDifferencesKernel(float *output, const float *input,
     // Compute the output value
     float value = stencil[0] * current;
 
-    UNROLL_LOOP(Radius)
-    for (int i = 1; i <= Radius; i++) {
+    UnrollerL<0, Radius>::step( [&] (int i)){
       value +=
           stencil[i] * (infront[i - 1] + behind[i - 1] + tile[ty - i][tx] +
                         tile[ty + i][tx] + tile[ty][tx - i] + tile[ty][tx + i]);
     }
+    //for (int i = 1; i <= Radius; i++) {
+    //  value +=
+    //      stencil[i] * (infront[i - 1] + behind[i - 1] + tile[ty - i][tx] +
+    //                    tile[ty + i][tx] + tile[ty][tx - i] + tile[ty][tx + i]);
+    //}
 
     // Store the output value
     if (validw) output[outputIndex] = value;
