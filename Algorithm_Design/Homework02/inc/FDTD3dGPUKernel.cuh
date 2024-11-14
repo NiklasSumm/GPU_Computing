@@ -176,7 +176,7 @@ __global__ void FiniteDifferencesKernel(float *output, const float *input,
     // Compute the output value
     float value = stencil[0] * current;
 
-    UnrollerL<0, Radius>::step( [&value, &infront, &behind] (int i) {
+    UnrollerL<0, Radius>::step( [&value, &infront, &behind, &tx, &ty] (int i) {
       value +=
           stencil[i] * (infront[i - 1] + behind[i - 1] + tile[ty - i][tx] +
                         tile[ty + i][tx] + tile[ty][tx - i] + tile[ty][tx + i]);
