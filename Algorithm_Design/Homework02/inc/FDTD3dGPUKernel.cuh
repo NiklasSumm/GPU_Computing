@@ -28,13 +28,33 @@
 #include "FDTD3dGPU.h"
 #include <cooperative_groups.h>
 
+/// Helper macros for stringification
+#define TO_STRING_HELPER(X)   #X
+#define TO_STRING(X)          TO_STRING_HELPER(X)
+
+// Define loop unrolling depending on the compiler
+#if defined(__ICC) || defined(__ICL)
+  #define UNROLL_LOOP(n)      _Pragma(TO_STRING(unroll (n)))
+#elif defined(__clang__)
+  #define UNROLL_LOOP(n)      _Pragma(TO_STRING(unroll (n)))
+#elif defined(__GNUC__) && !defined(__clang__)
+  #define UNROLL_LOOP(n)      _Pragma(TO_STRING(GCC unroll (16)))
+#elif defined(_MSC_BUILD)
+  #pragma message ("Microsoft Visual C++ (MSVC) detected: Loop unrolling not supported!")
+  #define UNROLL_LOOP(n)
+#else
+  #warning "Unknown compiler: Loop unrolling not supported!"
+  #define UNROLL_LOOP(n)
+#endif
+
 namespace cg = cooperative_groups;
 
 // Note: If you change the RADIUS, you should also change the unrolling below
-#define RADIUS 4
+//#define RADIUS 4
 
-__constant__ float stencil[RADIUS + 1];
+__constant__ float stencil[10 + 1]; //Size is adjusted to maximum radius, so that is always large enough
 
+template<int Radius>
 __global__ void FiniteDifferencesKernel(float *output, const float *input,
                                         const int dimx, const int dimy,
                                         const int dimz) {
@@ -48,34 +68,34 @@ __global__ void FiniteDifferencesKernel(float *output, const float *input,
   const int worky = blockDim.y;
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
-  __shared__ float tile[k_blockDimMaxY + 2 * RADIUS][k_blockDimX + 2 * RADIUS];
+  __shared__ float tile[k_blockDimMaxY + 2 * Radius][k_blockDimX + 2 * Radius];
 
-  const int stride_y = dimx + 2 * RADIUS;
-  const int stride_z = stride_y * (dimy + 2 * RADIUS);
+  const int stride_y = dimx + 2 * Radius;
+  const int stride_z = stride_y * (dimy + 2 * Radius);
 
   int inputIndex = 0;
   int outputIndex = 0;
 
   // Advance inputIndex to start of inner volume
-  inputIndex += RADIUS * stride_y + RADIUS;
+  inputIndex += Radius * stride_y + Radius;
 
   // Advance inputIndex to target element
   inputIndex += gtidy * stride_y + gtidx;
 
-  float infront[RADIUS];
-  float behind[RADIUS];
+  float infront[Radius];
+  float behind[Radius];
   float current;
 
-  const int tx = ltidx + RADIUS;
-  const int ty = ltidy + RADIUS;
+  const int tx = ltidx + Radius;
+  const int ty = ltidy + Radius;
 
   // Check in bounds
-  if ((gtidx >= dimx + RADIUS) || (gtidy >= dimy + RADIUS)) validr = false;
+  if ((gtidx >= dimx + Radius) || (gtidy >= dimy + Radius)) validr = false;
 
   if ((gtidx >= dimx) || (gtidy >= dimy)) validw = false;
 
   // Preload the "infront" and "behind" data
-  for (int i = RADIUS - 2; i >= 0; i--) {
+  for (int i = Radius - 2; i >= 0; i--) {
     if (validr) behind[i] = input[inputIndex];
 
     inputIndex += stride_z;
@@ -86,7 +106,7 @@ __global__ void FiniteDifferencesKernel(float *output, const float *input,
   outputIndex = inputIndex;
   inputIndex += stride_z;
 
-  for (int i = 0; i < RADIUS; i++) {
+  for (int i = 0; i < Radius; i++) {
     if (validr) infront[i] = input[inputIndex];
 
     inputIndex += stride_z;
@@ -97,15 +117,15 @@ __global__ void FiniteDifferencesKernel(float *output, const float *input,
 
   for (int iz = 0; iz < dimz; iz++) {
     // Advance the slice (move the thread-front)
-    for (int i = RADIUS - 1; i > 0; i--) behind[i] = behind[i - 1];
+    for (int i = Radius - 1; i > 0; i--) behind[i] = behind[i - 1];
 
     behind[0] = current;
     current = infront[0];
-#pragma unroll 4
 
-    for (int i = 0; i < RADIUS - 1; i++) infront[i] = infront[i + 1];
+    UNROLL_LOOP(Radius)
+    for (int i = 0; i < Radius - 1; i++) infront[i] = infront[i + 1];
 
-    if (validr) infront[RADIUS - 1] = input[inputIndex];
+    if (validr) infront[Radius - 1] = input[inputIndex];
 
     inputIndex += stride_z;
     outputIndex += stride_z;
@@ -120,15 +140,15 @@ __global__ void FiniteDifferencesKernel(float *output, const float *input,
 
     // Update the data slice in the local tile
     // Halo above & below
-    if (ltidy < RADIUS) {
-      tile[ltidy][tx] = input[outputIndex - RADIUS * stride_y];
-      tile[ltidy + worky + RADIUS][tx] = input[outputIndex + worky * stride_y];
+    if (ltidy < Radius) {
+      tile[ltidy][tx] = input[outputIndex - Radius * stride_y];
+      tile[ltidy + worky + Radius][tx] = input[outputIndex + worky * stride_y];
     }
 
     // Halo left & right
-    if (ltidx < RADIUS) {
-      tile[ty][ltidx] = input[outputIndex - RADIUS];
-      tile[ty][ltidx + workx + RADIUS] = input[outputIndex + workx];
+    if (ltidx < Radius) {
+      tile[ty][ltidx] = input[outputIndex - Radius];
+      tile[ty][ltidx + workx + Radius] = input[outputIndex + workx];
     }
 
     tile[ty][tx] = current;
@@ -136,9 +156,9 @@ __global__ void FiniteDifferencesKernel(float *output, const float *input,
 
     // Compute the output value
     float value = stencil[0] * current;
-#pragma unroll 4
 
-    for (int i = 1; i <= RADIUS; i++) {
+    UNROLL_LOOP(Radius)
+    for (int i = 1; i <= Radius; i++) {
       value +=
           stencil[i] * (infront[i - 1] + behind[i - 1] + tile[ty - i][tx] +
                         tile[ty + i][tx] + tile[ty][tx - i] + tile[ty][tx + i]);
