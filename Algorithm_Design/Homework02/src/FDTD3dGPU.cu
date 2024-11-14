@@ -98,9 +98,12 @@ bool fdtdGPU(float *output, const float *input, const float *coeff,
 #endif
 
   // Check the radius is valid
-  if (radius != RADIUS) {
-    printf("radius is invalid, must be %d - see kernel for details.\n", RADIUS);
+  if (radius > 10 || radius < 1) {
+    printf("radius is invalid, must be between 1 and 10.\n");
     exit(EXIT_FAILURE);
+  }
+  else{
+    printf("Radius: %i\n", radius);
   }
 
   // Get the number of CUDA enabled GPU devices
@@ -194,8 +197,49 @@ bool fdtdGPU(float *output, const float *input, const float *coeff,
 
     // Launch the kernel
     printf("launch kernel\n");
-    FiniteDifferencesKernel<<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
+
+    switch (radius){
+      case 1:
+        FiniteDifferencesKernel<1><<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
                                                    dimy, dimz);
+        break;
+      case 2:
+        FiniteDifferencesKernel<2><<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
+                                                   dimy, dimz);
+        break;
+      case 3:
+        FiniteDifferencesKernel<3><<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
+                                                   dimy, dimz);
+        break;
+      case 4:
+        FiniteDifferencesKernel<4><<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
+                                                   dimy, dimz);
+        break;
+      case 5:
+        FiniteDifferencesKernel<5><<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
+                                                   dimy, dimz);
+        break;
+      case 6:
+        FiniteDifferencesKernel<6><<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
+                                                   dimy, dimz);
+        break;
+      case 7:
+        FiniteDifferencesKernel<7><<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
+                                                   dimy, dimz);
+        break;
+      case 8:
+        FiniteDifferencesKernel<8><<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
+                                                   dimy, dimz);
+        break;
+      case 9:
+        FiniteDifferencesKernel<9><<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
+                                                   dimy, dimz);
+        break;
+      case 10:
+        FiniteDifferencesKernel<10><<<dimGrid, dimBlock>>>(bufferDst, bufferSrc, dimx,
+                                                   dimy, dimz);
+        break;
+    }
 
     // Toggle the buffers
     // Visual Studio 2005 does not like std::swap
