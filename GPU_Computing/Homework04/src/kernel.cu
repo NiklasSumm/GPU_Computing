@@ -71,7 +71,7 @@ void SharedMem2globalMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, flo
 __global__ void 
 SharedMem2Registers(size_t size)
 {
-	__shared__ float sharedData[];
+	extern __shared__ float sharedData[];
 
 	int threadId = threadIdx.x;
 
@@ -84,11 +84,11 @@ void SharedMem2Registers_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, siz
 __global__ void 
 Registers2SharedMem(size_t size)
 {
-	__shared__ float sharedData[];
+	extern __shared__ float sharedData[];
 
 	int threadId = threadIdx.x;
 
-	float resiterValue = 3.0f;
+	float registerValue = 3.0f;
 
 	sharedData[threadId] = registerValue;
 }
