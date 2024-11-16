@@ -16,48 +16,84 @@
 //
 
 __global__ void 
-globalMem2SharedMem
-//(/*TODO Parameters*/)
-( )
+globalMem2SharedMem(const float* src, float out_float, size_t size)
 {
-	/*TODO Kernel Code*/
+    extern __shared__ float sharedData[];
+
+    int threadId = threadIdx.x;
+    int globalId = blockIdx.x * blockDim.x + threadId;
+
+	int num_threads = blockDim.x * gridDim.x;
+
+	int num_copies_per_thread = (size + num_threads - 1) / num_threads;
+
+	for (int i = 0; i < num_copies_per_thread; i++){
+		int globalIndex = globalId + i * gridDim.x * blockDim.x;
+		int sharedIndex = threadId + i * blockDim.x;
+
+		if (globalIndex < size) {
+            sharedMemory[sharedIndex] = src[globalIndex];
+        }
+	}
+
+    if (threadId == 0) *out = static_cast<float>(numElements);
 }
 
-void globalMem2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize /* TODO Parameters*/) {
-	globalMem2SharedMem<<< gridSize, blockSize, shmSize >>>( /* TODO Parameters */);
-}
-
-__global__ void 
-SharedMem2globalMem
-//(/*TODO Parameters*/)
-( )
-{
-	/*TODO Kernel Code*/
-}
-void SharedMem2globalMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize /* TODO Parameters*/) {
-	SharedMem2globalMem<<< gridSize, blockSize, shmSize >>>( /* TODO Parameters */);
-}
-
-__global__ void 
-SharedMem2Registers
-//(/*TODO Parameters*/)
-( )
-{
-	/*TODO Kernel Code*/
-}
-void SharedMem2Registers_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize /* TODO Parameters*/) {
-	SharedMem2Registers<<< gridSize, blockSize, shmSize >>>( /* TODO Parameters */);
+void globalMem2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, const float* src, float out_float, size_t size) {
+	globalMem2SharedMem<<< gridSize, blockSize, shmSize >>>(src, out_float, size);
 }
 
 __global__ void 
-Registers2SharedMem
-//(/*TODO Parameters*/)
-( )
+SharedMem2globalMem(float* dest, size_t size )
 {
-	/*TODO Kernel Code*/
+	extern __shared__ float sharedData[];
+
+    int threadId = threadIdx.x;
+    int globalId = blockIdx.x * blockDim.x + threadId;
+
+	int num_threads = blockDim.x * gridDim.x;
+
+	int num_copies_per_thread = (size + num_threads - 1) / num_threads;
+
+	for (int i = 0; i < num_copies_per_thread; i++){
+		int globalIndex = globalId + i * gridDim.x * blockDim.x;
+		int sharedIndex = threadId + i * blockDim.x;
+
+		if (globalIndex < size) {
+			dest[globalIndex] = sharedData[sharedIndex];
+        }
+	}
 }
-void Registers2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize /* TODO Parameters*/) {
-	Registers2SharedMem<<< gridSize, blockSize, shmSize >>>( /* TODO Parameters */);
+void SharedMem2globalMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, float* dest, size_t size) {
+	SharedMem2globalMem<<< gridSize, blockSize, shmSize >>>(dest, size);
+}
+
+__global__ void 
+SharedMem2Registers(size_t size)
+{
+	__shared__ float sharedData[];
+
+	int threadId = threadIdx.x;
+
+	float registerValue = sharedData[threadId];
+}
+void SharedMem2Registers_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size) {
+	SharedMem2Registers<<< gridSize, blockSize, shmSize >>>(size);
+}
+
+__global__ void 
+Registers2SharedMem(size_t size)
+{
+	__shared__ float sharedData[];
+
+	int threadId = threadIdx.x;
+
+	float resiterValue = 3.0f;
+
+	sharedData[threadId] = registerValue;
+}
+void Registers2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size) {
+	Registers2SharedMem<<< gridSize, blockSize, shmSize >>>(size);
 }
 
 __global__ void 
