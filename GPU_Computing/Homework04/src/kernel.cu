@@ -32,7 +32,7 @@ globalMem2SharedMem(const float* src, float* out_float, size_t size)
 		int sharedIndex = threadId + i * blockDim.x;
 
 		if (globalIndex < size) {
-            sharedMemory[sharedIndex] = src[globalIndex];
+            sharedData[sharedIndex] = src[globalIndex];
         }
 	}
 
