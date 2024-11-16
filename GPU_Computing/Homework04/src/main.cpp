@@ -32,7 +32,7 @@ void printHelp(char *);
 //
 // Kernel Wrappers
 //
-extern void globalMem2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, const float* src, float out_float, size_t size);
+extern void globalMem2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, const float* src, float* out_float, size_t size);
 extern void SharedMem2globalMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, float* dest, size_t size);
 //extern void SharedMem2Registers_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize /* TODO Parameters*/);
 //extern void Registers2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize /* TODO Parameters*/);
@@ -254,4 +254,3 @@ printHelp(char * programName)
 		<< "     Offset parameter for global-offset test. Not that size parameter is ignored then." << std::endl
 		<< "" << std::endl;
 }
-
