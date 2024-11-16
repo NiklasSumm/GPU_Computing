@@ -16,7 +16,7 @@
 //
 
 __global__ void 
-globalMem2SharedMem(const float* src, float out_float, size_t size)
+globalMem2SharedMem(const float* src, float* out_float, size_t size)
 {
     extern __shared__ float sharedData[];
 
@@ -36,10 +36,10 @@ globalMem2SharedMem(const float* src, float out_float, size_t size)
         }
 	}
 
-    if (threadId == 0) *out = static_cast<float>(numElements);
+    if (threadId == 0) *out_float = static_cast<float>(numElements);
 }
 
-void globalMem2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, const float* src, float out_float, size_t size) {
+void globalMem2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, const float* src, float* out_float, size_t size) {
 	globalMem2SharedMem<<< gridSize, blockSize, shmSize >>>(src, out_float, size);
 }
 
