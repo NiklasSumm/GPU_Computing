@@ -36,7 +36,7 @@ globalMem2SharedMem(const float* src, float* out_float, size_t size)
         }
 	}
 
-    if (threadId == 0) *out_float = static_cast<float>(numElements);
+    if (threadId == 0) *out_float = static_cast<float>(size);
 }
 
 void globalMem2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, const float* src, float* out_float, size_t size) {
