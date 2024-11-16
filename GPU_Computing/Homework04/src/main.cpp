@@ -108,7 +108,8 @@ main ( int argc, char * argv[] )
 	chCommandLineGet <int> ( &optMemorySize, "s", argc, argv );
 	chCommandLineGet <int> ( &optMemorySize, "size", argc, argv );
 	optMemorySize = optMemorySize != 0 ? optMemorySize : DEFAULT_MEM_SIZE;
-	
+
+	int sharedMemorySize = (optMemorySize + optGridSize - 1) / optGridSize;
 
 	//
 	// Device Memory
@@ -144,23 +145,21 @@ main ( int argc, char * argv[] )
 		std::cout << "Starting kernel: " << grid_dim.x << "x" << block_dim.x << " threads, " << optMemorySize << "B shared memory" << ", " << optNumIterations << " iterations" << std::endl;
 		if ( chCommandLineGetBool ( "global2shared", argc, argv ) )
 		{
-			globalMem2SharedMem_Wrapper( grid_dim, block_dim, 0 /*Shared Memory Size*/
-					/*TODO Parameters*/);
+			globalMem2SharedMem_Wrapper( grid_dim, block_dim, sharedMemorySize, d_memoryA, optMemorySize / sizeof(float), outFloat);
 		}
 		else if ( chCommandLineGetBool ( "shared2global", argc, argv ) )
 		{
-			SharedMem2globalMem_Wrapper( grid_dim, block_dim, 0 /*Shared Memory Size*/
-					/*TODO Parameters*/);
+			SharedMem2globalMem_Wrapper( grid_dim, block_dim, sharedMemorySize, d_memoryA, optMemorySize / sizeof(float));
 		}
 		else if ( chCommandLineGetBool ( "shared2register", argc, argv ) )
 		{
-			SharedMem2Registers_Wrapper( grid_dim, block_dim, 0 /*Shared Memory Size*/
-					/*TODO Parameters*/);
+			//SharedMem2Registers_Wrapper( grid_dim, block_dim, sharedMemorySize
+			//		/*TODO Parameters*/);
 		}
 		else if ( chCommandLineGetBool ( "register2shared", argc, argv ) )
 		{
-			Registers2SharedMem_Wrapper( grid_dim, block_dim, 0 /*Shared Memory Size*/
-					/*TODO Parameters*/);
+			//Registers2SharedMem_Wrapper( grid_dim, block_dim, sharedMemorySize
+			//		/*TODO Parameters*/);
 		}
 		else if ( chCommandLineGetBool ( "shared2register_conflict", argc, argv ) )
 		{
