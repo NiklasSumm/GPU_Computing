@@ -130,7 +130,7 @@ main ( int argc, char * argv[] )
 		          << "*** Error - Memory allocation failed" << std::endl
 		          << "***\033[0m" << std::endl;
 
-		exit (-1);
+		//exit (-1);
 	}
 	
 	//
