@@ -137,7 +137,7 @@ main ( int argc, char * argv[] )
 	// Tests
 	//
 	kernelTimer.start();
-	//for ( int i = 0; i < optNumIterations; i++ )
+	for ( int i = 0; i < optNumIterations; i++ )
 	{
 		//
 		// Launch Kernel
@@ -187,28 +187,28 @@ main ( int argc, char * argv[] )
 
 	if ( chCommandLineGetBool ( "global2shared", argc, argv ) ) {
 		std::cout << "Copy global->shared, size=" << std::setw(10) << optMemorySize << ", gDim=" << std::setw(5) << grid_dim.x << ", bDim=" << std::setw(5) << block_dim.x;
-		//std::cout << ", time=" << kernelTimer.getTime(optNumIterations) << 
+		std::cout << ", time=" << kernelTimer.getTime(optNumIterations) << 
 		std::cout.precision ( 2 );
 		std::cout << ", bw=" << std::fixed << std::setw(6) << ( optMemorySize * grid_dim.x ) / kernelTimer.getTime(optNumIterations) / (1E09) << "GB/s" << std::endl;
 	}
 	
 	if ( chCommandLineGetBool ( "shared2global", argc, argv ) ) {
 		std::cout << "Copy shared->global, size=" << std::setw(10) << optMemorySize << ", gDim=" << std::setw(5) << grid_dim.x << ", bDim=" << std::setw(5) << block_dim.x;
-		//std::cout << ", time=" << kernelTimer.getTime(optNumIterations) << 
+		std::cout << ", time=" << kernelTimer.getTime(optNumIterations) << 
 		std::cout.precision ( 2 );
 		std::cout << ", bw=" << std::fixed << std::setw(6) << ( optMemorySize * grid_dim.x ) / kernelTimer.getTime(optNumIterations) / (1E09) << "GB/s" << std::endl;
 	}
 
 	if ( chCommandLineGetBool ( "shared2register", argc, argv ) ) {
 		std::cout << "Copy shared->register, size=" << std::setw(10) << optMemorySize << ", gDim=" << std::setw(5) << grid_dim.x << ", bDim=" << std::setw(5) << block_dim.x;
-		//std::cout << ", time=" << kernelTimer.getTime(optNumIterations) << 
+		std::cout << ", time=" << kernelTimer.getTime(optNumIterations) << 
 		std::cout.precision ( 2 );
 		std::cout << ", bw=" << std::fixed << std::setw(6) << ( optMemorySize * grid_dim.x ) / kernelTimer.getTime(optNumIterations) / (1E09) << "GB/s" << std::endl;
 	}
 	
 	if ( chCommandLineGetBool ( "register2shared", argc, argv ) ) {
 		std::cout << "Copy register->shared, size=" << std::setw(10) << optMemorySize << ", gDim=" << std::setw(5) << grid_dim.x << ", bDim=" << std::setw(5) << block_dim.x;
-		//std::cout << ", time=" << kernelTimer.getTime(optNumIterations) << 
+		std::cout << ", time=" << kernelTimer.getTime(optNumIterations) << 
 		std::cout.precision ( 2 );
 		std::cout << ", bw=" << std::fixed << std::setw(6) << ( optMemorySize * grid_dim.x ) / kernelTimer.getTime(optNumIterations) / (1E09) << "GB/s" << std::endl;
 	}	
