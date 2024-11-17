@@ -142,7 +142,7 @@ main ( int argc, char * argv[] )
 		//
 		// Launch Kernel
 		//
-		std::cout << "Starting kernel: " << grid_dim.x << "x" << block_dim.x << " threads, " << optMemorySize << "B shared memory" << ", " << optNumIterations << " iterations" << std::endl;
+		//std::cout << "Starting kernel: " << grid_dim.x << "x" << block_dim.x << " threads, " << optMemorySize << "B shared memory" << ", " << optNumIterations << " iterations" << std::endl;
 		if ( chCommandLineGetBool ( "global2shared", argc, argv ) )
 		{
 			globalMem2SharedMem_Wrapper( grid_dim, block_dim, sharedMemorySize, d_memoryA, outFloat, optMemorySize / sizeof(float));
