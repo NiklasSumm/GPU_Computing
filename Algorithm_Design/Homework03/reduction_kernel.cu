@@ -167,7 +167,7 @@ __global__ void reduce1(T *g_idata, T *g_odata, unsigned int n) {
   // write result for this block to global mem
   if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 
-  cg::sync();
+  cg::sync(cta);
 
   if (bid == 0){
     int entries_per_thread = gridDim.x + 32 - 1 / 32;
