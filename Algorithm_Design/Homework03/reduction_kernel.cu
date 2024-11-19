@@ -135,8 +135,6 @@ __global__ void reduce1(T *g_idata, T *g_odata, unsigned int n) {
   cg::thread_block cta = cg::this_thread_block();
   T *sdata = SharedMemory<T>();
 
-  __shared__ T *blockSums = new T[128];
-
   // load shared mem
   unsigned int tid = threadIdx.x;
   unsigned int bid = blockIdx.x;
@@ -167,19 +165,23 @@ __global__ void reduce1(T *g_idata, T *g_odata, unsigned int n) {
   }
 
   // write result for this block to global mem
-  if (tid == 0) blockSums[blockIdx.x] = sdata[0];
+  if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 
-  grid.sync();
+  cg::sync();
 
   if (bid == 0){
     int entries_per_thread = gridDim.x + 32 - 1 / 32;
 
-    //for (int i = 0; i < entries_per_thread; i++){
-    //  int index = tid + i * 32;
-    //  if (index < gridDim.x){
-    //    blockData[index] = g_odata[index];
-    //  }
-    //}
+    T *blockSums = SharedMemory<T>();
+
+    for (int i = 0; i < entries_per_thread; i++){
+      int index = tid + i * 32;
+      if (index < gridDim.x){
+        blockSums[index] = g_odata[index];
+      }
+    }
+
+    __syncthreads();
 
     for (unsigned int s = 1; s < blockDim.x; s *= 2) {
       for (unsigned int ent = 0; ent < entries_per_thread + 1 / 2; ent++){
@@ -188,7 +190,7 @@ __global__ void reduce1(T *g_idata, T *g_odata, unsigned int n) {
         if (index + s < blockDim.x) {
           blockSums[index] += blockSums[index + s];
         }
-        cg::sync(cta);
+        __syncthreads();
       }
     }
 
