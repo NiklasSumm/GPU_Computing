@@ -135,27 +135,67 @@ __global__ void reduce1(T *g_idata, T *g_odata, unsigned int n) {
   cg::thread_block cta = cg::this_thread_block();
   T *sdata = SharedMemory<T>();
 
+  __shared__ T *blockSums = new T[128];
+
   // load shared mem
   unsigned int tid = threadIdx.x;
+  unsigned int bid = blockIdx.x;
   unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-  sdata[tid] = (i < n) ? g_idata[i] : 0;
+  int number_of_threads = blockDim.x * gridDim.x;
+  int entries_per_thread = (n + number_of_threads - 1) / number_of_threads;
+
+  for (int j = 0; j < entries_per_thread; j++){
+    int idx = i + j * number_of_threads;
+    int sdataIdx = i + j * blockDim.x;
+    sdata[sdataIdx] = (idx < n) ? g_idata[idx] : 0;
+  }
 
   cg::sync(cta);
 
   // do reduction in shared mem
-  for (unsigned int s = 1; s < blockDim.x; s *= 2) {
-    int index = 2 * s * tid;
+  for (unsigned int s = 1; s < blockDim.x * entries_per_thread; s *= 2) {
+    for (unsigned int ent = 0; ent < entries_per_thread + 1 / 2; ent++){
+      int index = 2 * s * (tid + 32 * ent);
 
-    if (index < blockDim.x) {
-      sdata[index] += sdata[index + s];
+      if (index + s < blockDim.x) {
+        sdata[index] += sdata[index + s];
+      }
+
+      cg::sync(cta);
     }
-
-    cg::sync(cta);
   }
 
   // write result for this block to global mem
-  if (tid == 0) g_odata[blockIdx.x] = sdata[0];
+  if (tid == 0) blockSums[blockIdx.x] = sdata[0];
+
+  grid.sync();
+
+  if (bid == 0){
+    int entries_per_thread = gridDim.x + 32 - 1 / 32;
+
+    //for (int i = 0; i < entries_per_thread; i++){
+    //  int index = tid + i * 32;
+    //  if (index < gridDim.x){
+    //    blockData[index] = g_odata[index];
+    //  }
+    //}
+
+    for (unsigned int s = 1; s < blockDim.x; s *= 2) {
+      for (unsigned int ent = 0; ent < entries_per_thread + 1 / 2; ent++){
+        int index = 2 * s * (tid + 32 * ent);
+
+        if (index + s < blockDim.x) {
+          blockSums[index] += blockSums[index + s];
+        }
+        cg::sync(cta);
+      }
+    }
+
+    if (tid == 0){
+      g_odata[0] = blockSums[0];
+    }
+  }
 }
 
 /*
