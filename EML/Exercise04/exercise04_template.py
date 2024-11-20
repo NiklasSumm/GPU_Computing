@@ -159,6 +159,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.L2_reg)
 
     start = time.time()
+    data_time = []
     data_epoch = []
 
     print(f'Starting training at: {time.time():.4f}')
@@ -168,6 +169,13 @@ def main():
         current_time = time.time() - start
         print("Current time: " + str(current_time))
         data_epoch.append({"Epoch": epoch, "Accuracy": accuracy})
+        data_time.append({"Time": current_time, "Accuracy": accuracy})
+
+    with open("Accuracy_time.csv", 'w', newline='') as csvfile:
+        fieldnames = ["Time", "Accuracy"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(data_time)
 
     with open("Accuracy.csv", 'w', newline='') as csvfile:
         fieldnames = ["Epoch", "Accuracy"]
