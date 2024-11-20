@@ -86,6 +86,8 @@ def test(model, device, test_loader, epoch):
         epoch,
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
+    
+    return 100. * correct / len(test_loader.dataset)
 
 def main():
     # Training settings
