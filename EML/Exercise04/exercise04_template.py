@@ -144,7 +144,7 @@ def main():
     test_transforms = transforms.Compose([transforms.ToTensor()])
     train_transforms = transforms.Compose([
             transforms.ToTensor(),
-            transforms.GaussianBlur(3)
+            transforms.CutMix()
         ])
 
     #dataset_train = datasets.SVHN('../data', split='train', download=True, transform=train_transforms)
