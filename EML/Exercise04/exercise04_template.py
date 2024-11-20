@@ -37,6 +37,7 @@ class VGG11(nn.Module):
             nn.Conv2d(512, 512, 3, 1),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
+            nn.Flatten(),
             nn.Linear(512, 4096),
             nn.ReLU(),
             nn.Linear(4096, 4096),
