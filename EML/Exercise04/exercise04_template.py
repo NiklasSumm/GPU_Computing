@@ -142,8 +142,10 @@ def main():
         test_kwargs.update(cuda_kwargs)
 
     test_transforms = transforms.Compose([transforms.ToTensor()])
-    train_transforms = [transforms.ToTensor()]
-    train_transforms = transforms.Compose(train_transforms)
+    train_transforms = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.CenterCrop(8)
+        ])
 
     #dataset_train = datasets.SVHN('../data', split='train', download=True, transform=train_transforms)
     #dataset_test = datasets.SVHN('../data', split='test', download=True, transform=test_transforms)
