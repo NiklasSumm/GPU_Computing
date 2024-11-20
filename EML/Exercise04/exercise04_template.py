@@ -176,7 +176,7 @@ def main():
         writer.writerows(data_epoch)
 
     with open("Weights_L2_reg" + str(args.L2_reg) +".txt", "a") as txtfile:
-        txtfile.write(model.layers[25].weight.data)
+        txtfile.write(str(model.layers[25].weight.data))
 
     if (args.L2_reg is not None):
         f_name = f'trained_VGG11_L2-{args.L2_reg}.pt'
