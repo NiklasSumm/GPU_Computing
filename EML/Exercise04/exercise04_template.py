@@ -112,7 +112,7 @@ def main():
                         help='learning rate (default: 0.0001)')
     parser.add_argument('--dropout_p', type=float, default=0.0,
                         help='dropout_p (default: 0.0)')
-    parser.add_argument('--L2_reg', type=float, default=None,
+    parser.add_argument('--L2_reg', type=float, default=0,
                         help='L2_reg (default: None)')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
@@ -144,7 +144,7 @@ def main():
     test_transforms = transforms.Compose([transforms.ToTensor()])
     train_transforms = transforms.Compose([
             transforms.ToTensor(),
-            transforms.GaussianBlur(3)
+            transforms.Grayscale(3)
         ])
 
     #dataset_train = datasets.SVHN('../data', split='train', download=True, transform=train_transforms)
