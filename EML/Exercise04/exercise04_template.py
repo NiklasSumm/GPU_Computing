@@ -16,7 +16,7 @@ class VGG11(nn.Module):
 
     def _make_layers(self, dropout_p):
         layers = [
-            nn.Conv2d(3, 64, 3, 1),
+            nn.Conv2d(3*32*32, 64, 3, 1),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
             nn.Conv2d(64, 128, 3, 1),
