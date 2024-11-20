@@ -156,7 +156,7 @@ def main():
 
     model = VGG11(dropout_p=args.dropout_p).to(device)
     
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.L2_reg)
 
     start = time.time()
     data_epoch = []
@@ -174,6 +174,8 @@ def main():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data_epoch)
+
+    print(model.layers[25].weight.data)
 
     if (args.L2_reg is not None):
         f_name = f'trained_VGG11_L2-{args.L2_reg}.pt'
