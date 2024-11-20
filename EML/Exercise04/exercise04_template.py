@@ -175,6 +175,7 @@ def main():
         writer.writeheader()
         writer.writerows(data_epoch)
 
+    torch.set_printoptions(threshold=10_000_000)
     with open("Weights_L2_reg" + str(args.L2_reg) +".txt", "a") as txtfile:
         txtfile.write(str(model.layers[25].weight.data))
 
