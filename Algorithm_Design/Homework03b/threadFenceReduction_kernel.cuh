@@ -343,22 +343,22 @@ extern "C" void reduceCustom(int size, float *d_idata,
     void *kernel1Args[] = {&d_idata, &d_odata, &d_out, &size};
     if (isPow2(size)) {
       if (threads == 1024){
-        cudaLaunchCooperativeKernel((void*)reduce1<1024, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<1024, true>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else if (threads == 512){
-        cudaLaunchCooperativeKernel((void*)reduce1<512, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<512, true>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else if (threads == 256){
-        cudaLaunchCooperativeKernel((void*)reduce1<256, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<256, true>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else if (threads == 128){
-        cudaLaunchCooperativeKernel((void*)reduce1<128, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<128, true>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else if (threads == 64){
-        cudaLaunchCooperativeKernel((void*)reduce1<64, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<64, true>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else if (threads == 32){
-        cudaLaunchCooperativeKernel((void*)reduce1<32, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<32, true>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else{
         printf("Block size not allowed.");
@@ -366,22 +366,22 @@ extern "C" void reduceCustom(int size, float *d_idata,
     }
     else{
       if (threads == 1024){
-        cudaLaunchCooperativeKernel((void*)reduce1<1024, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<1024, false>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else if (threads == 512){
-        cudaLaunchCooperativeKernel((void*)reduce1<512, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<512, false>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else if (threads == 256){
-        cudaLaunchCooperativeKernel((void*)reduce1<256, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<256, false>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else if (threads == 128){
-        cudaLaunchCooperativeKernel((void*)reduce1<128, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<128, false>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else if (threads == 64){
-        cudaLaunchCooperativeKernel((void*)reduce1<64, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<64, false>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else if (threads == 32){
-        cudaLaunchCooperativeKernel((void*)reduce1<32, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<32, false>, dimGrid, dimBlock, kernel1Args, smemSize);
       }
       else{
         printf("Block size not allowed.");
@@ -392,22 +392,22 @@ extern "C" void reduceCustom(int size, float *d_idata,
     void *kernel2Args[] = {&d_idata, &d_out, &size};
     if (isPow2(size)) {
       if (threads == 1024){
-        cudaLaunchCooperativeKernel((void*)reduce2<1024, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<1024, true>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else if (threads == 512){
-        cudaLaunchCooperativeKernel((void*)reduce2<512, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<512, true>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else if (threads == 256){
-        cudaLaunchCooperativeKernel((void*)reduce2<256, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<256, true>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else if (threads == 128){
-        cudaLaunchCooperativeKernel((void*)reduce2<128, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<128, true>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else if (threads == 64){
-        cudaLaunchCooperativeKernel((void*)reduce2<64, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<64, true>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else if (threads == 32){
-        cudaLaunchCooperativeKernel((void*)reduce2<32, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<32, true>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else{
         printf("Block size not allowed.");
@@ -415,22 +415,22 @@ extern "C" void reduceCustom(int size, float *d_idata,
     }
     else{
       if (threads == 1024){
-        cudaLaunchCooperativeKernel((void*)reduce2<1024, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<1024, false>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else if (threads == 512){
-        cudaLaunchCooperativeKernel((void*)reduce2<512, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<512, false>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else if (threads == 256){
-        cudaLaunchCooperativeKernel((void*)reduce2<256, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<256, false>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else if (threads == 128){
-        cudaLaunchCooperativeKernel((void*)reduce2<128, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<128, false>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else if (threads == 64){
-        cudaLaunchCooperativeKernel((void*)reduce2<64, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<64, false>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else if (threads == 32){
-        cudaLaunchCooperativeKernel((void*)reduce2<32, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce2<32, false>, dimGrid, dimBlock, kernel2Args, smemSize);
       }
       else{
         printf("Block size not allowed.");
