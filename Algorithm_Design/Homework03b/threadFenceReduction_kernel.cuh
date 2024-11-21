@@ -303,7 +303,7 @@ extern "C" void reduceCustom(int size, float *d_idata,
     threads = pow(2, ceil(log(threads)/log(2))); //get next larges power of 2
     
     if (threads < 32) threads = 32;
-    if (threads > 512) threads = 512;
+    if (threads > 1024) threads = 1024;
   }
 
   dim3 dimGrid(blocks, 1, 1);
