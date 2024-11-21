@@ -277,7 +277,7 @@ bool isPow2(unsigned int x) { return ((x & (x - 1)) == 0); }
 
 extern "C" void reduceCustom(int size, float *d_idata,
                        float *d_odata, float *d_out, int custom){
-  nt device;
+  int device;
   cudaGetDevice(&device);
   cudaDeviceProp prop;
   cudaGetDeviceProperties(&prop, device);
