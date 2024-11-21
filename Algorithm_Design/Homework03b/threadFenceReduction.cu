@@ -191,7 +191,7 @@ float benchmarkReduce(int n, int numThreads, int numBlocks, int maxThreads,
                       int maxBlocks, int testIterations, bool multiPass,
                       bool cpuFinalReduction, int cpuFinalThreshold,
                       StopWatchInterface *timer, float *h_odata, float *d_idata,
-                      float *d_odata, int useCustom = 0, float d_out = NULL) {
+                      float *d_odata, int useCustom = 0, float *d_out = NULL) {
   float gpu_result = 0;
   bool bNeedReadback = true;
   cudaError_t error;
@@ -426,11 +426,11 @@ bool runTest(int argc, char **argv) {
     // allocate device memory and data
     float *d_idata = NULL;
     float *d_odata = NULL;
-    float d_out = NULL;
+    float *d_out = NULL;
 
     checkCudaErrors(cudaMalloc((void **)&d_idata, bytes));
     checkCudaErrors(cudaMalloc((void **)&d_odata, numBlocks * sizeof(float)));
-    checkCudaErrors(cudaMalloc((void **)d_out, sizeof(float)));
+    checkCudaErrors(cudaMalloc((void **)&d_out, sizeof(float)));
 
     // copy data directly to device memory
     checkCudaErrors(
