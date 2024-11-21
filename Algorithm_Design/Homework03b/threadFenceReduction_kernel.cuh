@@ -280,12 +280,20 @@ extern "C" void reduceCustom(int size, float *d_idata,
   int threads = 0;
   int blocks = 0;
 
-  if ((size + 63) / 64 < 76){
+  int device;
+  cudaGetDevice(&device);
+
+  cudaDeviceProp deviceProp;
+  cudaGetDeviceProperties(&deviceProp, device);
+
+  int numSMs = deviceProp.multiProcessorCount;
+
+  if ((size + 63) / 64 < numSMs){
     threads = 32;
     blocks = (size + 63) / 64;
   }
   else{
-    blocks = 76;
+    blocks = numSMs;
     threads = size / blocks;
     //threads += 32 - threads % 32;
 
