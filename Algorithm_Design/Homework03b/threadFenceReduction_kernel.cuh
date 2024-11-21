@@ -131,6 +131,8 @@ __global__ void reduce1(const float *g_idata, float *g_out,
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
   
+
+  //This code is taken from the reduceBlocks function, but the write to g_odata is removed.
   extern __shared__ float sdata[];
 
   // perform first level of reduction,
@@ -156,7 +158,7 @@ __global__ void reduce1(const float *g_idata, float *g_out,
   // do reduction in shared mem
   reduceBlock<blockSize>(sdata, mySum, tid, cta);
 
-  if (threadIdx.x == 0){
+  if (tid == 0){
     g_out[0] += sdata[0];
   }
 }
@@ -176,8 +178,6 @@ __global__ void reduce2(const float *g_idata, float *g_odata, float *g_out,
     int tid = threadIdx.x;
     __shared__ float sums[76];
 
-    //int entries_per_thread = gridDim.x + blockDim.x - 1 / blockDim.x;
-
     if (tid < gridDim.x){
       sums[tid] = g_odata[tid];
     }
@@ -190,26 +190,6 @@ __global__ void reduce2(const float *g_idata, float *g_odata, float *g_out,
       }
       __syncthreads();
     }
-
-    //for (int i = 0; i < entries_per_thread; i++){
-    //  int index = threadIdx.x + i * blockDim.x;
-    //  if (index < gridDim.x){
-    //    sums[index] = g_odata[index];
-    //  }
-    //}
-//
-    //__syncthreads();
-//
-    //for (unsigned int s = 1; s < blockDim.x; s *= 2) {
-    //  for (unsigned int ent = 0; ent < entries_per_thread + 1 / 2; ent++){
-    //    int index = 2 * s * (threadIdx.x + blockDim.x * ent);
-//
-    //    if (index + s < blockDim.x) {
-    //      sums[index] += sums[index + s];
-    //    }
-    //    __syncthreads();
-    //  }
-    //}
 
     if (tid == 0){
       g_out[0] = sums[0];
