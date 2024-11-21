@@ -138,7 +138,7 @@ __global__ void reduce1(const float *g_idata, float *g_odata, float *g_out,
 }
 
 template <unsigned int blockSize, bool nIsPow2>
-__global__ void reduce2(const float *g_idata, float *g_odata, float g_out,
+__global__ void reduce2(const float *g_idata, float *g_odata, float *g_out,
                                 unsigned int n) {
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
