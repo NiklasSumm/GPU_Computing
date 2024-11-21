@@ -142,15 +142,15 @@ __global__ void reduce2(const float *g_idata, float *g_odata, float g_out,
   cg::thread_block cta = cg::this_thread_block();
   reduceBlocks<blockDim.x, isPow2(n)>(g_idata, g_odata, n, cta);
 
-  grid.sync()
+  grid.sync();
 
   if (blockIdx.x == 0){
-    __shared__ float sums[128];
+    __shared__ float sums[76];
 
-    int entries_per_thread = gridDim.x + 32 - 1 / 32;
+    int entries_per_thread = gridDim.x + blockDim.x - 1 / blockDim.x;
 
     for (int i = 0; i < entries_per_thread; i++){
-      int index = tid + i * 32;
+      int index = tid + i * blockDim.x;
       if (index < gridDim.x){
         sums[index] = g_odata[index];
       }
