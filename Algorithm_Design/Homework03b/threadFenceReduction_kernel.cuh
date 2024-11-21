@@ -121,6 +121,58 @@ __global__ void reduceMultiPass(const float *g_idata, float *g_odata,
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
   reduceBlocks<blockSize, nIsPow2>(g_idata, g_odata, n, cta);
+
+
+}
+
+__global__ void reduce1(const float *g_idata, float *g_odata, float g_out,
+                                unsigned int n) {
+  // Handle to thread block group
+  cg::thread_block cta = cg::this_thread_block();
+  reduceBlocks<blockDim.x, isPow2(n)>(g_idata, g_odata, n, cta);
+
+  if (threadIdx.x == 0){
+      g_out += g_odata[blockIdx.x * blockDim.x];
+  }
+}
+
+__global__ void reduce2(const float *g_idata, float *g_odata, float g_out,
+                                unsigned int n) {
+  // Handle to thread block group
+  cg::thread_block cta = cg::this_thread_block();
+  reduceBlocks<blockDim.x, isPow2(n)>(g_idata, g_odata, n, cta);
+
+  grid.sync()
+
+  if (blockIdx.x == 0){
+    __shared__ float sums[128];
+
+    int entries_per_thread = gridDim.x + 32 - 1 / 32;
+
+    for (int i = 0; i < entries_per_thread; i++){
+      int index = tid + i * 32;
+      if (index < gridDim.x){
+        sums[index] = g_odata[index];
+      }
+    }
+
+    __syncthreads();
+
+    for (unsigned int s = 1; s < blockDim.x; s *= 2) {
+      for (unsigned int ent = 0; ent < entries_per_thread + 1 / 2; ent++){
+        int index = 2 * s * (tid + 32 * ent);
+
+        if (index + s < blockDim.x) {
+          sums[index] += sums[index + s];
+        }
+        __syncthreads();
+      }
+    }
+
+    if (tid == 0){
+      g_out = sums[0];
+    }
+  }
 }
 
 // Global variable used by reduceSinglePass to count how many blocks have
@@ -203,7 +255,40 @@ __global__ void reduceSinglePass(const float *g_idata, float *g_odata,
   }
 }
 
-bool isPow2(unsigned int x) { return ((x & (x - 1)) == 0); }
+__host__ __device__ bool isPow2(unsigned int x) { return ((x & (x - 1)) == 0); }
+
+extern "C" void reduceCustom(int size, float *d_idata,
+                       float *d_odata, float d_out, int custom){
+  int threads = 0;
+  int blocks = 0;
+
+  if ((size + 63) / 64 > 76){
+    threads = 32;
+    blocks = (size + 63) / 64;
+  }
+  else{
+    blocks = 76;
+    threads = size / blocks;
+    threads += 32 - threads % 32;
+
+    if (threads > 1024) threads = 1024;
+  }
+
+  dim3 dimBlock(threads, 1, 1);
+  dim3 dimGrid(blocks, 1, 1);
+
+  int smemSize =
+    (threads <= 32) ? 2 * threads * sizeof(float) : threads * sizeof(float);
+
+  //reduce1<true><<<dimGrid, dimBlock, smemSize>>>(d_idata, d_odata, d_out, size);
+  if (custom == 1){
+    cudaLaunchCooperativeKernel((**void)reduce1, dimGrid, dimBlock, smemSize, (**void)&d_idata, (**void)&d_odata, (**void)d_out, (**void)size);
+  }
+  else{
+    cudaLaunchCooperativeKernel((**void)reduce2, dimGrid, dimBlock, smemSize, (**void)&d_idata, (**void)&d_odata, (**void)d_out, (**void)size);
+  }
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Wrapper function for kernel launch
@@ -217,9 +302,7 @@ extern "C" void reduce(int size, int threads, int blocks, float *d_idata,
 
   // choose which of the optimized versions of reduction to launch
   if (isPow2(size)) {
-    switch (threads) {
-      case 512:
-        reduceMultiPass<512, true>
+    reduceMultiPass<512, true>
             <<<dimGrid, dimBlock, smemSize>>>(d_idata, d_odata, size);
         break;
 
