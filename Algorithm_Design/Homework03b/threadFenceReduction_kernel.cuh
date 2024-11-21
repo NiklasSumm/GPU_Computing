@@ -273,7 +273,7 @@ __global__ void reduceSinglePass(const float *g_idata, float *g_odata,
   }
 }
 
-__host__ __device__ bool isPow2(unsigned int x) { return ((x & (x - 1)) == 0); }
+bool isPow2(unsigned int x) { return ((x & (x - 1)) == 0); }
 
 extern "C" void reduceCustom(int size, float *d_idata,
                        float *d_odata, float *d_out, int custom){
@@ -297,11 +297,13 @@ extern "C" void reduceCustom(int size, float *d_idata,
   int smemSize =
     (threads <= 32) ? 2 * threads * sizeof(float) : threads * sizeof(float);
 
+  void *kernelArgs = {&d_idata, &d_odata, &d_out, &size};
+
   if (custom == 1){
     if (isPow2(size)) {
       if (threads > 512){
         dim3 dimBlock(1024, 1, 1);
-        cudaLaunchCooperativeKernel((void*)reduce1<1024, true>, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
+        cudaLaunchCooperativeKernel((void*)reduce1<1024, true>, dimGrid, dimBlock, kernelArgs);
       }
     }
     //cudaLaunchCooperativeKernel((void*)reduce1, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
@@ -310,7 +312,7 @@ extern "C" void reduceCustom(int size, float *d_idata,
     if (isPow2(size)) {
       if (threads > 512){
         dim3 dimBlock(1024, 1, 1);
-        cudaLaunchCooperativeKernel((void*)reduce2<1024, true>, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
+        cudaLaunchCooperativeKernel((void*)reduce2<1024, true>, dimGrid, dimBlock, kernelArgs);
       }
     }
     //cudaLaunchCooperativeKernel((void*)reduce2, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
