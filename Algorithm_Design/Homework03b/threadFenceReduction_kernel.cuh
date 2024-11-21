@@ -145,29 +145,43 @@ __global__ void reduce2(const float *g_idata, float *g_odata, float g_out,
   grid.sync();
 
   if (blockIdx.x == 0){
+    tid = threadIdx.x;
     __shared__ float sums[76];
 
     int entries_per_thread = gridDim.x + blockDim.x - 1 / blockDim.x;
 
-    for (int i = 0; i < entries_per_thread; i++){
-      int index = tid + i * blockDim.x;
-      if (index < gridDim.x){
-        sums[index] = g_odata[index];
-      }
+    if (tid < gridDim.x){
+      sums[tid] = g_odata[tid];
     }
-
-    __syncthreads();
 
     for (unsigned int s = 1; s < blockDim.x; s *= 2) {
-      for (unsigned int ent = 0; ent < entries_per_thread + 1 / 2; ent++){
-        int index = 2 * s * (tid + 32 * ent);
+      int index = 2 * s * tid;
 
-        if (index + s < blockDim.x) {
-          sums[index] += sums[index + s];
-        }
-        __syncthreads();
+      if (index + s < blockDim.x) {
+        sums[index] += sums[index + s];
       }
+      __syncthreads();
     }
+
+    //for (int i = 0; i < entries_per_thread; i++){
+    //  int index = threadIdx.x + i * blockDim.x;
+    //  if (index < gridDim.x){
+    //    sums[index] = g_odata[index];
+    //  }
+    //}
+//
+    //__syncthreads();
+//
+    //for (unsigned int s = 1; s < blockDim.x; s *= 2) {
+    //  for (unsigned int ent = 0; ent < entries_per_thread + 1 / 2; ent++){
+    //    int index = 2 * s * (threadIdx.x + blockDim.x * ent);
+//
+    //    if (index + s < blockDim.x) {
+    //      sums[index] += sums[index + s];
+    //    }
+    //    __syncthreads();
+    //  }
+    //}
 
     if (tid == 0){
       g_out = sums[0];
