@@ -129,7 +129,8 @@ __global__ void reduce1(const float *g_idata, float *g_odata, float g_out,
                                 unsigned int n) {
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
-  reduceBlocks<blockDim.x, isPow2(n)>(g_idata, g_odata, n, cta);
+  bool ispow2 = isPow2(n);
+  reduceBlocks<blockDim.x, ispow2>(g_idata, g_odata, n, cta);
 
   if (threadIdx.x == 0){
       g_out += g_odata[blockIdx.x * blockDim.x];
@@ -140,7 +141,8 @@ __global__ void reduce2(const float *g_idata, float *g_odata, float g_out,
                                 unsigned int n) {
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
-  reduceBlocks<blockDim.x, isPow2(n)>(g_idata, g_odata, n, cta);
+  bool ispow2 = isPow2(n);
+  reduceBlocks<blockDim.x, ispow2>(g_idata, g_odata, n, cta);
 
   grid.sync();
 
