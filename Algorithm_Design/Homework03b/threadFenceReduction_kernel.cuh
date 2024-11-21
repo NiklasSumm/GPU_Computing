@@ -302,7 +302,9 @@ extern "C" void reduce(int size, int threads, int blocks, float *d_idata,
 
   // choose which of the optimized versions of reduction to launch
   if (isPow2(size)) {
-    reduceMultiPass<512, true>
+    switch (threads) {
+      case 512:
+        reduceMultiPass<512, true>
             <<<dimGrid, dimBlock, smemSize>>>(d_idata, d_odata, size);
         break;
 
