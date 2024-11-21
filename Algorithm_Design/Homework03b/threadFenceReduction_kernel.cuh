@@ -282,10 +282,10 @@ extern "C" void reduceCustom(int size, float *d_idata,
 
   //reduce1<true><<<dimGrid, dimBlock, smemSize>>>(d_idata, d_odata, d_out, size);
   if (custom == 1){
-    cudaLaunchCooperativeKernel((void*)reduce1, dimGrid, dimBlock, smemSize, (void*)&d_idata, (void**)&d_odata, (void**)d_out, (void**)size);
+    cudaLaunchCooperativeKernel((void*)reduce1, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
   }
   else{
-    cudaLaunchCooperativeKernel((void*)reduce2, dimGrid, dimBlock, smemSize, (void**)&d_idata, (void**)&d_odata, (void**)d_out, (void**)size);
+    cudaLaunchCooperativeKernel((void*)reduce2, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
   }
 }
 
