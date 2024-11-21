@@ -126,14 +126,38 @@ __global__ void reduceMultiPass(const float *g_idata, float *g_odata,
 }
 
 template <unsigned int blockSize, bool nIsPow2>
-__global__ void reduce1(const float *g_idata, float *g_odata, float *g_out,
+__global__ void reduce1(const float *g_idata, float *g_out,
                                 unsigned int n) {
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
-  reduceBlocks<blockSize, nIsPow2>(g_idata, g_odata, n, cta);
+  
+  extern __shared__ float sdata[];
+
+  // perform first level of reduction,
+  // reading from global memory, writing to shared memory
+  unsigned int tid = threadIdx.x;
+  unsigned int i = blockIdx.x * (blockSize * 2) + threadIdx.x;
+  unsigned int gridSize = blockSize * 2 * gridDim.x;
+  float mySum = 0;
+
+  // we reduce multiple elements per thread.  The number is determined by the
+  // number of active thread blocks (via gridDim).  More blocks will result
+  // in a larger gridSize and therefore fewer elements per thread
+  while (i < n) {
+    mySum += g_idata[i];
+
+    // ensure we don't read out of bounds -- this is optimized away for powerOf2
+    // sized arrays
+    if (nIsPow2 || i + blockSize < n) mySum += g_idata[i + blockSize];
+
+    i += gridSize;
+  }
+
+  // do reduction in shared mem
+  reduceBlock<blockSize>(sdata, mySum, tid, cta);
 
   if (threadIdx.x == 0){
-    g_out[0] += g_odata[blockIdx.x * blockDim.x];
+    g_out[0] += sdata[0];
   }
 }
 
@@ -315,9 +339,8 @@ extern "C" void reduceCustom(int size, float *d_idata,
   int smemSize =
     (threads <= 32) ? 2 * threads * sizeof(float) : threads * sizeof(float);
 
-  void *kernelArgs[] = {&d_idata, &d_odata, &d_out, &size};
-
   if (custom == 1){
+    void *kernel1Args[] = {&d_idata, &d_odata, &d_out, &size};
     if (isPow2(size)) {
       if (threads == 1024){
         cudaLaunchCooperativeKernel((void*)reduce1<1024, true>, dimGrid, dimBlock, kernelArgs, smemSize);
@@ -366,6 +389,7 @@ extern "C" void reduceCustom(int size, float *d_idata,
     }
   }
   else{
+    void *kernel2Args[] = {&d_idata, &d_out, &size};
     if (isPow2(size)) {
       if (threads == 1024){
         cudaLaunchCooperativeKernel((void*)reduce2<1024, true>, dimGrid, dimBlock, kernelArgs, smemSize);
