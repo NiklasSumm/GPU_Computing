@@ -347,10 +347,7 @@ extern "C" void reduceCustom(int size, float *d_idata,
         cudaLaunchCooperativeKernel((void*)reduce1<32, true>, dimGrid, dimBlock, kernelArgs, smemSize);
       }
     }
-    //cudaLaunchCooperativeKernel((void*)reduce1, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
-  }
-  else{
-    if (isPow2(size)) {
+    else{
       if (threads > 512){
         dim3 dimBlock(1024, 1, 1);
         printf("Number of threads: %i\n", 1024);
@@ -382,7 +379,72 @@ extern "C" void reduceCustom(int size, float *d_idata,
         cudaLaunchCooperativeKernel((void*)reduce1<32, false>, dimGrid, dimBlock, kernelArgs, smemSize);
       }
     }
-    //cudaLaunchCooperativeKernel((void*)reduce2, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
+  }
+  else{
+    if (isPow2(size)) {
+      if (threads > 512){
+        dim3 dimBlock(1024, 1, 1);
+        printf("Number of threads: %i\n", 1024);
+        cudaLaunchCooperativeKernel((void*)reduce1<1024, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 256){
+        dim3 dimBlock(512, 1, 1);
+        printf("Number of threads: %i\n", 512);
+        cudaLaunchCooperativeKernel((void*)reduce2<512, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 128){
+        dim3 dimBlock(256, 1, 1);
+        printf("Number of threads: %i\n", 256);
+        cudaLaunchCooperativeKernel((void*)reduce2<256, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 64){
+        dim3 dimBlock(128, 1, 1);
+        printf("Number of threads: %i\n", 128);
+        cudaLaunchCooperativeKernel((void*)reduce2<128, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 32){
+        dim3 dimBlock(64, 1, 1);
+        printf("Number of threads: %i\n", 64);
+        cudaLaunchCooperativeKernel((void*)reduce2<64, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else{
+        dim3 dimBlock(32, 1, 1);
+        printf("Number of threads: %i\n", 32);
+        cudaLaunchCooperativeKernel((void*)reduce2<32, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+    }
+    else{
+      if (threads > 512){
+        dim3 dimBlock(1024, 1, 1);
+        printf("Number of threads: %i\n", 1024);
+        cudaLaunchCooperativeKernel((void*)reduce1<1024, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 256){
+        dim3 dimBlock(512, 1, 1);
+        printf("Number of threads: %i\n", 512);
+        cudaLaunchCooperativeKernel((void*)reduce2<512, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 128){
+        dim3 dimBlock(256, 1, 1);
+        printf("Number of threads: %i\n", 256);
+        cudaLaunchCooperativeKernel((void*)reduce2<256, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 64){
+        dim3 dimBlock(128, 1, 1);
+        printf("Number of threads: %i\n", 128);
+        cudaLaunchCooperativeKernel((void*)reduce2<128, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 32){
+        dim3 dimBlock(64, 1, 1);
+        printf("Number of threads: %i\n", 64);
+        cudaLaunchCooperativeKernel((void*)reduce2<64, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else{
+        dim3 dimBlock(32, 1, 1);
+        printf("Number of threads: %i\n", 32);
+        cudaLaunchCooperativeKernel((void*)reduce2<32, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+    }
   }
 }
 
