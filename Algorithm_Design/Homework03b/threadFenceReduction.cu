@@ -404,7 +404,7 @@ bool runTest(int argc, char **argv) {
     unsigned int bytes = size * sizeof(float);
 
     float *h_idata = (float *)malloc(bytes);
-    float h_out = (float *)malloc(sizeof(float));
+    float *h_out = (float *)malloc(sizeof(float));
 
     for (int i = 0; i < size; i++) {
       // Keep the numbers small so we don't get truncation error in the sum
