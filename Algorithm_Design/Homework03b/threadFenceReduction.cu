@@ -205,6 +205,7 @@ float benchmarkReduce(int n, int numThreads, int numBlocks, int maxThreads,
     cudaDeviceSynchronize();
     sdkStartTimer(&timer);
 
+    //if a custom kernel is provided we will use one of the custom kernels we implemented for exercise 3.3
     if (useCustom == 1 || useCustom == 2){
       reduceCustom(n, d_idata, d_odata, d_out, useCustom);
       getLastCudaError("Kernel execution failed");
@@ -288,7 +289,7 @@ float benchmarkReduce(int n, int numThreads, int numBlocks, int maxThreads,
 // for generating a "shmoo" plot showing the performance for each kernel
 // variation over a wide range of input sizes.
 ////////////////////////////////////////////////////////////////////////////////
-void shmoo(int minN, int maxN, int maxThreads, int maxBlocks) {
+void shmoo(int minN, int maxN, int maxThreads, int maxBlocks, int useCustom = 0) {
   // create random input data on CPU
   unsigned int bytes = maxN * sizeof(float);
 
@@ -307,13 +308,17 @@ void shmoo(int minN, int maxN, int maxThreads, int maxBlocks) {
   // allocate device memory and data
   float *d_idata = NULL;
   float *d_odata = NULL;
+  float *d_out = NULL; //Here the final result can be written to
 
   checkCudaErrors(cudaMalloc((void **)&d_idata, bytes));
   checkCudaErrors(cudaMalloc((void **)&d_odata, maxNumBlocks * sizeof(float)));
+  checkCudaErrors(cudaMalloc((void **)&d_out, sizeof(float)));
 
   // copy data directly to device memory
   checkCudaErrors(cudaMemcpy(d_idata, h_idata, bytes, cudaMemcpyHostToDevice));
   checkCudaErrors(cudaMemcpy(d_odata, h_idata, maxNumBlocks * sizeof(float),
+                             cudaMemcpyHostToDevice));
+  checkCudaErrors(cudaMemcpy(d_out, h_out, sizeof(float),
                              cudaMemcpyHostToDevice));
 
   // warm-up
@@ -337,7 +342,7 @@ void shmoo(int minN, int maxN, int maxThreads, int maxBlocks) {
 
       benchmarkReduce(i, numThreads, numBlocks, maxThreads, maxBlocks,
                       testIterations, multiPass == 1, false, 1, timer, h_odata,
-                      d_idata, d_odata);
+                      d_idata, d_odata, useCustom, d_out);
 
       float reduceTime = sdkGetAverageTimerValue(&timer);
       printf("%f%s", reduceTime, multiPass == 0 ? ", " : "\n");
@@ -380,6 +385,10 @@ bool runTest(int argc, char **argv) {
     maxBlocks = getCmdLineArgumentInt(argc, (const char **)argv, "maxblocks");
   }
 
+  //With the arg useCustom we can use our own kernels from exercise 3.3
+  //useCustom=1 -> accumulation kernel will be use
+  //useCustom=2 -> partial sum reduction kernel will be used
+  //useCustom=0 -> preimplemented kernels can be used
   if (checkCmdLineFlag(argc, (const char **)argv, "useCustom")) {
     useCustom = getCmdLineArgumentInt(argc, (const char **)argv, "useCustom");
   }
@@ -400,7 +409,7 @@ bool runTest(int argc, char **argv) {
   bool runShmoo = checkCmdLineFlag(argc, (const char **)argv, "shmoo");
 
   if (runShmoo) {
-    shmoo(1, 33554432, maxThreads, maxBlocks);
+    shmoo(1, 33554432, maxThreads, maxBlocks, useCustom);
   } else {
     // create random input data on CPU
     unsigned int bytes = size * sizeof(float);
@@ -433,7 +442,7 @@ bool runTest(int argc, char **argv) {
     // allocate device memory and data
     float *d_idata = NULL;
     float *d_odata = NULL;
-    float *d_out = NULL;
+    float *d_out = NULL; //Here the final result can be written to
 
     checkCudaErrors(cudaMalloc((void **)&d_idata, bytes));
     checkCudaErrors(cudaMalloc((void **)&d_odata, numBlocks * sizeof(float)));
