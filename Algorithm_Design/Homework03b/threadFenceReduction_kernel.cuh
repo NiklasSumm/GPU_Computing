@@ -297,7 +297,7 @@ extern "C" void reduceCustom(int size, float *d_idata,
   int smemSize =
     (threads <= 32) ? 2 * threads * sizeof(float) : threads * sizeof(float);
 
-  void *kernelArgs = {&d_idata, &d_odata, &d_out, &size};
+  void *kernelArgs[] = {&d_idata, &d_odata, &d_out, &size};
 
   if (custom == 1){
     if (isPow2(size)) {
