@@ -280,16 +280,16 @@ extern "C" void reduceCustom(int size, float *d_idata,
   int threads = 0;
   int blocks = 0;
 
-  if ((size + 63) / 64 > 76){
+  if ((size + 63) / 64 < 76){
     threads = 32;
     blocks = (size + 63) / 64;
   }
   else{
     blocks = 76;
     threads = size / blocks;
-    threads += 32 - threads % 32;
+    //threads += 32 - threads % 32;
 
-    if (threads > 1024) threads = 1024;
+    //if (threads > 1024) threads = 1024;
   }
 
   dim3 dimGrid(blocks, 1, 1);
