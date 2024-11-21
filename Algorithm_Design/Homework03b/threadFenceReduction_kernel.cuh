@@ -113,7 +113,6 @@ __device__ void reduceBlocks(const float *g_idata, float *g_odata,
 
   // write result for this block to global mem
   if (tid == 0) g_odata[blockIdx.x] = sdata[0];
-
 }
 
 template <unsigned int blockSize, bool nIsPow2>
@@ -306,6 +305,26 @@ extern "C" void reduceCustom(int size, float *d_idata,
         dim3 dimBlock(1024, 1, 1);
         cudaLaunchCooperativeKernel((void*)reduce1<1024, true>, dimGrid, dimBlock, kernelArgs, smemSize);
       }
+      else if (threads > 256){
+        dim3 dimBlock(512, 1, 1);
+        cudaLaunchCooperativeKernel((void*)reduce1<512, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 128){
+        dim3 dimBlock(256, 1, 1);
+        cudaLaunchCooperativeKernel((void*)reduce1<256, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 64){
+        dim3 dimBlock(128, 1, 1);
+        cudaLaunchCooperativeKernel((void*)reduce1<128, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 32){
+        dim3 dimBlock(64, 1, 1);
+        cudaLaunchCooperativeKernel((void*)reduce1<64, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else{
+        dim3 dimBlock(32, 1, 1);
+        cudaLaunchCooperativeKernel((void*)reduce1<32, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
     }
     //cudaLaunchCooperativeKernel((void*)reduce1, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
   }
@@ -313,7 +332,27 @@ extern "C" void reduceCustom(int size, float *d_idata,
     if (isPow2(size)) {
       if (threads > 512){
         dim3 dimBlock(1024, 1, 1);
-        cudaLaunchCooperativeKernel((void*)reduce2<1024, true>, dimGrid, dimBlock, kernelArgs, smemSize);
+        cudaLaunchCooperativeKernel((void*)reduce1<1024, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 256){
+        dim3 dimBlock(512, 1, 1);
+        cudaLaunchCooperativeKernel((void*)reduce1<512, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 128){
+        dim3 dimBlock(256, 1, 1);
+        cudaLaunchCooperativeKernel((void*)reduce1<256, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 64){
+        dim3 dimBlock(128, 1, 1);
+        cudaLaunchCooperativeKernel((void*)reduce1<128, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else if (threads > 32){
+        dim3 dimBlock(64, 1, 1);
+        cudaLaunchCooperativeKernel((void*)reduce1<64, false>, dimGrid, dimBlock, kernelArgs, smemSize);
+      }
+      else{
+        dim3 dimBlock(32, 1, 1);
+        cudaLaunchCooperativeKernel((void*)reduce1<32, false>, dimGrid, dimBlock, kernelArgs, smemSize);
       }
     }
     //cudaLaunchCooperativeKernel((void*)reduce2, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
