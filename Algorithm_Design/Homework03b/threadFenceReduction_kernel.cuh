@@ -126,14 +126,14 @@ __global__ void reduceMultiPass(const float *g_idata, float *g_odata,
 }
 
 template <unsigned int blockSize, bool nIsPow2>
-__global__ void reduce1(const float *g_idata, float *g_odata, float g_out,
+__global__ void reduce1(const float *g_idata, float *g_odata, float *g_out,
                                 unsigned int n) {
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
   reduceBlocks<blockSize, nIsPow2>(g_idata, g_odata, n, cta);
 
   if (threadIdx.x == 0){
-      g_out += g_odata[blockIdx.x * blockDim.x];
+    *g_out += g_odata[blockIdx.x * blockDim.x];
   }
 }
 
@@ -142,9 +142,11 @@ __global__ void reduce2(const float *g_idata, float *g_odata, float g_out,
                                 unsigned int n) {
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
+  cg::grid_group grid = cg::this_grid();
+
   reduceBlocks<blockSize, nIsPow2>(g_idata, g_odata, n, cta);
 
-  cg::grid.sync();
+  grid.sync();
 
   if (blockIdx.x == 0){
     int tid = threadIdx.x;
@@ -186,7 +188,7 @@ __global__ void reduce2(const float *g_idata, float *g_odata, float g_out,
     //}
 
     if (tid == 0){
-      g_out = sums[0];
+      *g_out = sums[0];
     }
   }
 }
@@ -274,7 +276,7 @@ __global__ void reduceSinglePass(const float *g_idata, float *g_odata,
 __host__ __device__ bool isPow2(unsigned int x) { return ((x & (x - 1)) == 0); }
 
 extern "C" void reduceCustom(int size, float *d_idata,
-                       float *d_odata, float d_out, int custom){
+                       float *d_odata, float *d_out, int custom){
   int threads = 0;
   int blocks = 0;
 
