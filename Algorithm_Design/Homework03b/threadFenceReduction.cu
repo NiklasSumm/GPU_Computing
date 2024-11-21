@@ -404,11 +404,14 @@ bool runTest(int argc, char **argv) {
     unsigned int bytes = size * sizeof(float);
 
     float *h_idata = (float *)malloc(bytes);
+    float h_out = (float *)malloc(sizeof(float));
 
     for (int i = 0; i < size; i++) {
       // Keep the numbers small so we don't get truncation error in the sum
       h_idata[i] = (rand() & 0xFF) / (float)RAND_MAX;
     }
+
+    h_out[0] = 0.0;
 
     int numBlocks = 0;
     int numThreads = 0;
@@ -436,6 +439,8 @@ bool runTest(int argc, char **argv) {
     checkCudaErrors(
         cudaMemcpy(d_idata, h_idata, bytes, cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_odata, h_idata, numBlocks * sizeof(float),
+                               cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_out, h_out, sizeof(float),
                                cudaMemcpyHostToDevice));
 
     // warm-up
