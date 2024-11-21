@@ -191,7 +191,7 @@ float benchmarkReduce(int n, int numThreads, int numBlocks, int maxThreads,
                       int maxBlocks, int testIterations, bool multiPass,
                       bool cpuFinalReduction, int cpuFinalThreshold,
                       StopWatchInterface *timer, float *h_odata, float *d_idata,
-                      float *d_odata) {
+                      float *d_odata, int useCustom = 0, float d_out = NULL) {
   float gpu_result = 0;
   bool bNeedReadback = true;
   cudaError_t error;
@@ -205,60 +205,68 @@ float benchmarkReduce(int n, int numThreads, int numBlocks, int maxThreads,
     cudaDeviceSynchronize();
     sdkStartTimer(&timer);
 
-    if (multiPass) {
-      // execute the kernel
-      reduce(n, numThreads, numBlocks, d_idata, d_odata);
-
-      // check if kernel execution generated an error
+    if (useCustom == 1 || useCustom == 2){
+      reduceCustom(n, d_idata, d_odata, d_out, useCustom);
       getLastCudaError("Kernel execution failed");
+    }
+    else{
+      if (multiPass) {
+        // execute the kernel
+        reduce(n, numThreads, numBlocks, d_idata, d_odata);
 
-      if (cpuFinalReduction) {
-        // sum partial sums from each block on CPU
-        // copy result from device to host
-        error = cudaMemcpy(h_odata, d_odata, numBlocks * sizeof(float),
-                           cudaMemcpyDeviceToHost);
-        checkCudaErrors(error);
+        // check if kernel execution generated an error
+        getLastCudaError("Kernel execution failed");
 
-        for (int i = 0; i < numBlocks; i++) {
-          gpu_result += h_odata[i];
-        }
-
-        bNeedReadback = false;
-      } else {
-        // sum partial block sums on GPU
-        int s = numBlocks;
-
-        while (s > cpuFinalThreshold) {
-          int threads = 0, blocks = 0;
-          getNumBlocksAndThreads(s, maxBlocks, maxThreads, blocks, threads);
-
-          reduce(s, threads, blocks, d_odata, d_odata);
-
-          s = s / (threads * 2);
-        }
-
-        if (s > 1) {
+        if (cpuFinalReduction) {
+          // sum partial sums from each block on CPU
           // copy result from device to host
-          error = cudaMemcpy(h_odata, d_odata, s * sizeof(float),
+          error = cudaMemcpy(h_odata, d_odata, numBlocks * sizeof(float),
                              cudaMemcpyDeviceToHost);
           checkCudaErrors(error);
 
-          for (int i = 0; i < s; i++) {
+          for (int i = 0; i < numBlocks; i++) {
             gpu_result += h_odata[i];
           }
 
           bNeedReadback = false;
+        } else {
+          // sum partial block sums on GPU
+          int s = numBlocks;
+
+          while (s > cpuFinalThreshold) {
+            int threads = 0, blocks = 0;
+            getNumBlocksAndThreads(s, maxBlocks, maxThreads, blocks, threads);
+
+            reduce(s, threads, blocks, d_odata, d_odata);
+
+            s = s / (threads * 2);
+          }
+
+          if (s > 1) {
+            // copy result from device to host
+            error = cudaMemcpy(h_odata, d_odata, s * sizeof(float),
+                               cudaMemcpyDeviceToHost);
+            checkCudaErrors(error);
+
+            for (int i = 0; i < s; i++) {
+              gpu_result += h_odata[i];
+            }
+
+            bNeedReadback = false;
+          }
         }
+      } else {
+        getLastCudaError("Kernel execution failed");
+
+        // execute the kernel
+        reduceSinglePass(n, numThreads, numBlocks, d_idata, d_odata);
+
+        // check if kernel execution generated an error
+        getLastCudaError("Kernel execution failed");
       }
-    } else {
-      getLastCudaError("Kernel execution failed");
-
-      // execute the kernel
-      reduceSinglePass(n, numThreads, numBlocks, d_idata, d_odata);
-
-      // check if kernel execution generated an error
-      getLastCudaError("Kernel execution failed");
     }
+
+    
 
     cudaDeviceSynchronize();
     sdkStopTimer(&timer);
@@ -358,6 +366,7 @@ bool runTest(int argc, char **argv) {
   int cpuFinalThreshold = 1;
   bool multipass = false;
   bool bTestResult = false;
+  int useCustom = 0;
 
   if (checkCmdLineFlag(argc, (const char **)argv, "n")) {
     size = getCmdLineArgumentInt(argc, (const char **)argv, "n");
@@ -369,6 +378,10 @@ bool runTest(int argc, char **argv) {
 
   if (checkCmdLineFlag(argc, (const char **)argv, "maxblocks")) {
     maxBlocks = getCmdLineArgumentInt(argc, (const char **)argv, "maxblocks");
+  }
+
+  if (checkCmdLineFlag(argc, (const char **)argv, "useCustom")) {
+    useCustom = getCmdLineArgumentInt(argc, (const char **)argv, "useCustom");
   }
 
   printf("%d elements\n", size);
@@ -413,9 +426,11 @@ bool runTest(int argc, char **argv) {
     // allocate device memory and data
     float *d_idata = NULL;
     float *d_odata = NULL;
+    float *d_out = NULL;
 
     checkCudaErrors(cudaMalloc((void **)&d_idata, bytes));
     checkCudaErrors(cudaMalloc((void **)&d_odata, numBlocks * sizeof(float)));
+    checkCudaErrors(cudaMalloc((void **)d_out, sizeof(float)));
 
     // copy data directly to device memory
     checkCudaErrors(
@@ -435,7 +450,7 @@ bool runTest(int argc, char **argv) {
     gpu_result =
         benchmarkReduce(size, numThreads, numBlocks, maxThreads, maxBlocks,
                         testIterations, multipass, cpuFinalReduction,
-                        cpuFinalThreshold, timer, h_odata, d_idata, d_odata);
+                        cpuFinalThreshold, timer, h_odata, d_idata, d_odata, useCustom, d_out);
 
     float reduceTime = sdkGetAverageTimerValue(&timer);
     printf("Average time: %f ms\n", reduceTime);
