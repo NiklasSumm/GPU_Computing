@@ -126,7 +126,7 @@ __global__ void reduceMultiPass(const float *g_idata, float *g_odata,
 }
 
 template <unsigned int blockSize, bool nIsPow2>
-__global__ void reduce1(const float *g_idata, float *g_out,
+__global__ void reduce1(const float *g_idata, float *g_odata, float *g_out,
                                 unsigned int n) {
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
@@ -369,7 +369,7 @@ extern "C" void reduceCustom(int size, float *d_idata,
     }
   }
   else{
-    void *kernel2Args[] = {&d_idata, &d_out, &size};
+    void *kernel2Args[] = {&d_idata, &d_odata, &d_out, &size};
     if (isPow2(size)) {
       if (threads == 1024){
         cudaLaunchCooperativeKernel((void*)reduce2<1024, true>, dimGrid, dimBlock, kernel2Args, smemSize);
