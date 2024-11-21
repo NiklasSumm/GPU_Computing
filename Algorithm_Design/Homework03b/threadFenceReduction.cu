@@ -385,7 +385,9 @@ bool runTest(int argc, char **argv) {
   }
 
   printf("%d elements\n", size);
-  //printf("%d threads (max)\n", maxThreads);
+  if (useCustom == 0){
+    printf("%d threads (max)\n", maxThreads);
+  }
 
   cpuFinalReduction = checkCmdLineFlag(argc, (const char **)argv, "cpufinal");
   multipass = checkCmdLineFlag(argc, (const char **)argv, "multipass");
@@ -424,7 +426,9 @@ bool runTest(int argc, char **argv) {
     // allocate mem for the result on host side
     float *h_odata = (float *)malloc(numBlocks * sizeof(float));
 
-    //printf("%d blocks\n", numBlocks);
+    if (useCustom == 0){
+      printf("%d blocks\n", numBlocks);
+    }
 
     // allocate device memory and data
     float *d_idata = NULL;
