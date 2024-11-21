@@ -294,11 +294,13 @@ void shmoo(int minN, int maxN, int maxThreads, int maxBlocks, int useCustom = 0)
   unsigned int bytes = maxN * sizeof(float);
 
   float *h_idata = (float *)malloc(bytes);
+  float *h_out = (float *)malloc(sizeof(float));
 
   for (int i = 0; i < maxN; i++) {
     // Keep the numbers small so we don't get truncation error in the sum
     h_idata[i] = (rand() & 0xFF) / (float)RAND_MAX;
   }
+  h_out[0] = 0.0;
 
   int maxNumBlocks = min(65535, maxN / maxThreads);
 
