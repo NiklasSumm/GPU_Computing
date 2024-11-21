@@ -113,6 +113,7 @@ __device__ void reduceBlocks(const float *g_idata, float *g_odata,
 
   // write result for this block to global mem
   if (tid == 0) g_odata[blockIdx.x] = sdata[0];
+
 }
 
 template <unsigned int blockSize, bool nIsPow2>
