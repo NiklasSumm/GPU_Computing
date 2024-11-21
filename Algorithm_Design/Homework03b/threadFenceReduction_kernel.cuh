@@ -277,6 +277,12 @@ bool isPow2(unsigned int x) { return ((x & (x - 1)) == 0); }
 
 extern "C" void reduceCustom(int size, float *d_idata,
                        float *d_odata, float *d_out, int custom){
+  cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, device_id);
+  if (!prop.cooperativeLaunch) {
+    printf("Error: Device does not support cooperative kernel launches!\n");
+  }
+
   int threads = 0;
   int blocks = 0;
 
