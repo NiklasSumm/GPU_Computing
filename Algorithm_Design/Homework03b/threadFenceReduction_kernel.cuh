@@ -152,7 +152,7 @@ __global__ void reduce2(const float *g_idata, float *g_odata, float *g_out,
     int tid = threadIdx.x;
     __shared__ float sums[76];
 
-    int entries_per_thread = gridDim.x + blockDim.x - 1 / blockDim.x;
+    //int entries_per_thread = gridDim.x + blockDim.x - 1 / blockDim.x;
 
     if (tid < gridDim.x){
       sums[tid] = g_odata[tid];
@@ -303,7 +303,7 @@ extern "C" void reduceCustom(int size, float *d_idata,
     if (isPow2(size)) {
       if (threads > 512){
         dim3 dimBlock(1024, 1, 1);
-        cudaLaunchCooperativeKernel((void*)reduce1<1024, true>, dimGrid, dimBlock, kernelArgs);
+        cudaLaunchCooperativeKernel((void*)reduce1<1024, true>, dimGrid, dimBlock, kernelArgs, smemSize);
       }
     }
     //cudaLaunchCooperativeKernel((void*)reduce1, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
@@ -312,7 +312,7 @@ extern "C" void reduceCustom(int size, float *d_idata,
     if (isPow2(size)) {
       if (threads > 512){
         dim3 dimBlock(1024, 1, 1);
-        cudaLaunchCooperativeKernel((void*)reduce2<1024, true>, dimGrid, dimBlock, kernelArgs);
+        cudaLaunchCooperativeKernel((void*)reduce2<1024, true>, dimGrid, dimBlock, kernelArgs, smemSize);
       }
     }
     //cudaLaunchCooperativeKernel((void*)reduce2, dimGrid, dimBlock, (void**)&d_idata, (void**)&d_odata, (void**)&d_out, (void**)&size);
