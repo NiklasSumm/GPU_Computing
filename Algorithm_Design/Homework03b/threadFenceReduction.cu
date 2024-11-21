@@ -426,7 +426,7 @@ bool runTest(int argc, char **argv) {
     // allocate device memory and data
     float *d_idata = NULL;
     float *d_odata = NULL;
-    float *d_out = NULL;
+    float d_out = NULL;
 
     checkCudaErrors(cudaMalloc((void **)&d_idata, bytes));
     checkCudaErrors(cudaMalloc((void **)&d_odata, numBlocks * sizeof(float)));
