@@ -162,6 +162,11 @@ main ( int argc, char * argv[] )
 		timer.stop();
 
 		printf("Time for matrix multiplication = %f", timer.getTime());
+
+		free(A);
+		free(B);
+		free(C);
+
 		return 0;
 	}
 	
