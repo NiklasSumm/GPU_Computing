@@ -102,7 +102,7 @@ void Registers2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, siz
 
 __global__ void 
 bankConflictsRead
-(size_t size, int stride, int iterations)
+(size_t size, int stride)
 {
 	extern __shared__ float sharedData[];
 
@@ -114,5 +114,5 @@ bankConflictsRead
 }
 
 void bankConflictsRead_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size, int stride) {
-	bankConflictsRead<<< gridSize, blockSize, shmSize >>>(size, stride, iterations);
+	bankConflictsRead<<< gridSize, blockSize, shmSize >>>(size, stride);
 }
