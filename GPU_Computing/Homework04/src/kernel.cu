@@ -75,7 +75,9 @@ SharedMem2Registers(size_t size)
 
 	int threadId = threadIdx.x;
 
-	float registerValue = sharedData[threadId];
+	if (threadId < size){
+		float registerValue = sharedData[threadId];
+	}
 }
 void SharedMem2Registers_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size) {
 	SharedMem2Registers<<< gridSize, blockSize, shmSize >>>(size);
@@ -90,7 +92,9 @@ Registers2SharedMem(size_t size)
 
 	float registerValue = 3.0f;
 
-	sharedData[threadId] = registerValue;
+	if (threadId < size){
+		sharedData[threadId] = registerValue;
+	}
 }
 void Registers2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size) {
 	Registers2SharedMem<<< gridSize, blockSize, shmSize >>>(size);
@@ -98,12 +102,17 @@ void Registers2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, siz
 
 __global__ void 
 bankConflictsRead
-//(/*TODO Parameters*/)
-( )
+(size_t size, int stride, int iterations)
 {
-	/*TODO Kernel Code*/
+	extern __shared__ float sharedData[];
+
+	int index = threadIdx.x * stride;
+
+	if (index < size){
+		float registerValue = sharedData[index];
+	}
 }
 
-void bankConflictsRead_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize /* TODO Parameters*/) {
-	bankConflictsRead<<< gridSize, blockSize, shmSize >>>( /* TODO Parameters */);
+void bankConflictsRead_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size, int stride) {
+	bankConflictsRead<<< gridSize, blockSize, shmSize >>>(size, stride, iterations);
 }
