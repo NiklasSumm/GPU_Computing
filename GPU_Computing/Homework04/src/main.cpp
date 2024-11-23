@@ -133,8 +133,6 @@ main ( int argc, char * argv[] )
 		//exit (-1);
 	}
 
-	printf("test0");
-
 	//if ( chCommandLineGetBool ( "matrixmult", argc, argv ) ){
 		int size = optMemorySize;
 		
@@ -145,12 +143,17 @@ main ( int argc, char * argv[] )
 		int* C;
 		C = (int*) malloc(sizeof(int) * size * size);
 
+		if (A == NULL){
+			printf("Null");
+		}
+		else{
 		for (int i = 0; i < size; i++){
 			for (int j = 0; j < size; j++){
 				A[i + j * size] = i + j;
 				B[i + j * size] = i * j;
 				C[i + j * size] = 0;
 			}
+		}
 		}
 //
 		//ChTimer timer;
