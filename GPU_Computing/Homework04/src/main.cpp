@@ -132,6 +132,11 @@ main ( int argc, char * argv[] )
 
 		//exit (-1);
 	}
+
+	if ( chCommandLineGetBool ( "matrixmult", argc, argv ) ){
+		MultMatrix(optMemorySize);
+		return 0;
+	}
 	
 	//
 	// Tests
@@ -153,18 +158,15 @@ main ( int argc, char * argv[] )
 		}
 		else if ( chCommandLineGetBool ( "shared2register", argc, argv ) )
 		{
-			//SharedMem2Registers_Wrapper( grid_dim, block_dim, sharedMemorySize
-			//		/*TODO Parameters*/);
+			SharedMem2Registers_Wrapper( grid_dim, block_dim, sharedMemorySize);
 		}
 		else if ( chCommandLineGetBool ( "register2shared", argc, argv ) )
 		{
-			//Registers2SharedMem_Wrapper( grid_dim, block_dim, sharedMemorySize
-			//		/*TODO Parameters*/);
+			Registers2SharedMem_Wrapper( grid_dim, block_dim, sharedMemorySize);
 		}
 		else if ( chCommandLineGetBool ( "shared2register_conflict", argc, argv ) )
 		{
-			bankConflictsRead_Wrapper( grid_dim, block_dim, 0 /*Shared Memory Size*/
-					/*TODO Parameters*/);
+			bankConflictsRead_Wrapper( grid_dim, block_dim, sharedMemorySize, optMemorySize / sizeof(float), optStride);
 		}
 	}
 
@@ -228,6 +230,36 @@ main ( int argc, char * argv[] )
 	}
 	
 	return 0;
+}
+
+void MultMatrix(int size){
+	int* A = new int[size][size]();
+	int* B = new int[size][size]();
+	int* C = new int[size][size]();
+
+	for (int i = 0; i < size; i++){
+		for (int j = 0; j < size; j++){
+			A[i][j] = i + j;
+			B[i][j] = i * j;
+			C[i][j] = 0;
+		}
+	}
+
+	ChTimer timer;
+
+	timer.start();
+
+	for (int i = 0; i < size; i++){
+		for (int j = 0; j < size; j++){
+			for (int k = 0; i < size; k++){
+				C[i][j] += A[i][k] * B[k][j];
+			}
+		}
+	}
+
+	kernelTimer.stop();
+
+	printf("Time for matrix multiplication = %d", kernelTimer.getTime())
 }
 
 void
