@@ -133,8 +133,8 @@ main ( int argc, char * argv[] )
 		//exit (-1);
 	}
 
-	//if ( chCommandLineGetBool ( "matrixmult", argc, argv ) ){
-		int size = 10;
+	if ( chCommandLineGetBool ( "matrixmult", argc, argv ) ){
+		int size = optMemorySize;
 		
 		int *A = new int[size * size];
 		//A = (int*) malloc(sizeof(int) * size * size);
@@ -170,7 +170,7 @@ main ( int argc, char * argv[] )
 		//free(A);
 		//free(B);
 		//free(C);
-	//}
+	}
 	
 	//
 	// Tests
