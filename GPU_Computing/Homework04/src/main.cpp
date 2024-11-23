@@ -233,9 +233,9 @@ main ( int argc, char * argv[] )
 }
 
 void MultMatrix(int size){
-	int* A = malloc(sizeof(int) * size * size)
-	int* B = malloc(sizeof(int) * size * size)
-	int* C = malloc(sizeof(int) * size * size)
+	int* A = (int*) malloc(sizeof(int) * size * size);
+	int* B = (int*) malloc(sizeof(int) * size * size);
+	int* C = (int*) malloc(sizeof(int) * size * size);
 
 	for (int i = 0; i < size; i++){
 		for (int j = 0; j < size; j++){
