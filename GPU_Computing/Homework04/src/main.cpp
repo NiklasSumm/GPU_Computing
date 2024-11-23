@@ -134,13 +134,13 @@ main ( int argc, char * argv[] )
 	}
 
 	//if ( chCommandLineGetBool ( "matrixmult", argc, argv ) ){
-		int size = optMemorySize;
+		int size = 10;
 		
-		int* A = new int[size * size];
+		int *A = new int[size * size];
 		//A = (int*) malloc(sizeof(int) * size * size);
-		int* B = new int[size * size];
+		int *B = new int[size * size];
 		//B = (int*) malloc(sizeof(int) * size * size);
-		int* C = new int[size * size];
+		int *C = new int[size * size];
 		//C = (int*) malloc(sizeof(int) * size * size);
 
 		for (int i = 0; i < size; i++){
