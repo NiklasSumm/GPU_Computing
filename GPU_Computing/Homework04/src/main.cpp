@@ -34,9 +34,9 @@ void printHelp(char *);
 //
 extern void globalMem2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, const float* src, float* out_float, size_t size);
 extern void SharedMem2globalMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, float* dest, size_t size);
-//extern void SharedMem2Registers_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize /* TODO Parameters*/);
-//extern void Registers2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize /* TODO Parameters*/);
-extern void bankConflictsRead_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize /* TODO Parameters*/);
+extern void SharedMem2Registers_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size);
+extern void Registers2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size);
+extern void bankConflictsRead_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size, int stride);
 
 
 //
