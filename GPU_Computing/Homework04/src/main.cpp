@@ -136,17 +136,13 @@ main ( int argc, char * argv[] )
 	//if ( chCommandLineGetBool ( "matrixmult", argc, argv ) ){
 		int size = optMemorySize;
 		
-		int* A;
-		A = (int*) malloc(sizeof(int) * size * size);
-		int* B;
-		B = (int*) malloc(sizeof(int) * size * size);
-		int* C;
-		C = (int*) malloc(sizeof(int) * size * size);
+		int* A = new int[size * size];
+		//A = (int*) malloc(sizeof(int) * size * size);
+		int* B = new int[size * size];
+		//B = (int*) malloc(sizeof(int) * size * size);
+		int* C = new int[size * size];
+		//C = (int*) malloc(sizeof(int) * size * size);
 
-		if (A == NULL){
-			printf("Null");
-		}
-		else{
 		for (int i = 0; i < size; i++){
 			for (int j = 0; j < size; j++){
 				A[i + j * size] = i + j;
@@ -154,27 +150,26 @@ main ( int argc, char * argv[] )
 				C[i + j * size] = 0;
 			}
 		}
-		}
-//
-		//ChTimer timer;
-//
-		//timer.start();
-//
-		//for (int i = 0; i < size; i++){
-		//	for (int j = 0; j < size; j++){
-		//		for (int k = 0; i < size; k++){
-		//			C[i + j * size] += A[i + k * size] * B[k + j * size];
-		//		}
-		//	}
-		//}
-//
-		//timer.stop();
-//
-		//printf("Time for matrix multiplication = %f", timer.getTime());
 
-		free(A);
-		free(B);
-		free(C);
+		ChTimer timer;
+
+		timer.start();
+
+		for (int i = 0; i < size; i++){
+			for (int j = 0; j < size; j++){
+				for (int k = 0; i < size; k++){
+					C[i + j * size] += A[i + k * size] * B[k + j * size];
+				}
+			}
+		}
+
+		timer.stop();
+
+		printf("Time for matrix multiplication = %f", timer.getTime());
+
+		//free(A);
+		//free(B);
+		//free(C);
 	//}
 	
 	//
