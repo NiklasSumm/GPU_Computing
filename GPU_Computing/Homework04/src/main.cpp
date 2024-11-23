@@ -38,6 +38,35 @@ extern void SharedMem2Registers_Wrapper(dim3 gridSize, dim3 blockSize, int shmSi
 extern void Registers2SharedMem_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size);
 extern void bankConflictsRead_Wrapper(dim3 gridSize, dim3 blockSize, int shmSize, size_t size, int stride);
 
+void MultMatrix(int size){
+	int* A = (int*) malloc(sizeof(int) * size * size);
+	int* B = (int*) malloc(sizeof(int) * size * size);
+	int* C = (int*) malloc(sizeof(int) * size * size);
+
+	for (int i = 0; i < size; i++){
+		for (int j = 0; j < size; j++){
+			A[i + j * size] = i + j;
+			B[i + j * size] = i * j;
+			C[i + j * size] = 0;
+		}
+	}
+
+	ChTimer timer;
+
+	timer.start();
+
+	for (int i = 0; i < size; i++){
+		for (int j = 0; j < size; j++){
+			for (int k = 0; i < size; k++){
+				C[i + j * size] += A[i + k * size] * B[k + j * size];
+			}
+		}
+	}
+
+	timer.stop();
+
+	printf("Time for matrix multiplication = %f", timer.getTime());
+}
 
 //
 // Main
@@ -158,11 +187,11 @@ main ( int argc, char * argv[] )
 		}
 		else if ( chCommandLineGetBool ( "shared2register", argc, argv ) )
 		{
-			SharedMem2Registers_Wrapper( grid_dim, block_dim, sharedMemorySize);
+			SharedMem2Registers_Wrapper( grid_dim, block_dim, sharedMemorySize, optMemorySize / sizeof(float));
 		}
 		else if ( chCommandLineGetBool ( "register2shared", argc, argv ) )
 		{
-			Registers2SharedMem_Wrapper( grid_dim, block_dim, sharedMemorySize);
+			Registers2SharedMem_Wrapper( grid_dim, block_dim, sharedMemorySize, optMemorySize / sizeof(float));
 		}
 		else if ( chCommandLineGetBool ( "shared2register_conflict", argc, argv ) )
 		{
@@ -230,36 +259,6 @@ main ( int argc, char * argv[] )
 	}
 	
 	return 0;
-}
-
-void MultMatrix(int size){
-	int* A = (int*) malloc(sizeof(int) * size * size);
-	int* B = (int*) malloc(sizeof(int) * size * size);
-	int* C = (int*) malloc(sizeof(int) * size * size);
-
-	for (int i = 0; i < size; i++){
-		for (int j = 0; j < size; j++){
-			A[i + j * size] = i + j;
-			B[i + j * size] = i * j;
-			C[i + j * size] = 0;
-		}
-	}
-
-	ChTimer timer;
-
-	timer.start();
-
-	for (int i = 0; i < size; i++){
-		for (int j = 0; j < size; j++){
-			for (int k = 0; i < size; k++){
-				C[i + j * size] += A[i + k * size] * B[k + j * size];
-			}
-		}
-	}
-
-	timer.stop();
-
-	printf("Time for matrix multiplication = %d", timer.getTime());
 }
 
 void
