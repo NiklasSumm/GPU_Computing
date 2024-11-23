@@ -148,29 +148,29 @@ main ( int argc, char * argv[] )
 		int* C;
 		C = (int*) malloc(sizeof(int) * size * size);
 
-		for (int i = 0; i < size; i++){
-			for (int j = 0; j < size; j++){
-				A[i + j * size] = i + j;
-				B[i + j * size] = i * j;
-				C[i + j * size] = 0;
-			}
-		}
-
-		ChTimer timer;
-
-		timer.start();
-
-		for (int i = 0; i < size; i++){
-			for (int j = 0; j < size; j++){
-				for (int k = 0; i < size; k++){
-					C[i + j * size] += A[i + k * size] * B[k + j * size];
-				}
-			}
-		}
-
-		timer.stop();
-
-		printf("Time for matrix multiplication = %f", timer.getTime());
+		//for (int i = 0; i < size; i++){
+		//	for (int j = 0; j < size; j++){
+		//		A[i + j * size] = i + j;
+		//		B[i + j * size] = i * j;
+		//		C[i + j * size] = 0;
+		//	}
+		//}
+//
+		//ChTimer timer;
+//
+		//timer.start();
+//
+		//for (int i = 0; i < size; i++){
+		//	for (int j = 0; j < size; j++){
+		//		for (int k = 0; i < size; k++){
+		//			C[i + j * size] += A[i + k * size] * B[k + j * size];
+		//		}
+		//	}
+		//}
+//
+		//timer.stop();
+//
+		//printf("Time for matrix multiplication = %f", timer.getTime());
 
 		free(A);
 		free(B);
