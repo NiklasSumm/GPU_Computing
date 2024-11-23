@@ -135,7 +135,10 @@ main ( int argc, char * argv[] )
 	if ( chCommandLineGetBool ( "matrixmult", argc, argv ) ){
 		int size = optMemorySize;
 
+		printf("test1");
+
 		int* A = (int*) malloc(sizeof(int) * size * size);
+		printf("test2");
 		int* B = (int*) malloc(sizeof(int) * size * size);
 		int* C = (int*) malloc(sizeof(int) * size * size);
 
@@ -166,8 +169,6 @@ main ( int argc, char * argv[] )
 		free(A);
 		free(B);
 		free(C);
-
-		return 0;
 	}
 	
 	//
