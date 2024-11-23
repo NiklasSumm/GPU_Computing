@@ -132,6 +132,8 @@ main ( int argc, char * argv[] )
 		//exit (-1);
 	}
 
+	printf("test0");
+
 	if ( chCommandLineGetBool ( "matrixmult", argc, argv ) ){
 		int size = optMemorySize;
 
