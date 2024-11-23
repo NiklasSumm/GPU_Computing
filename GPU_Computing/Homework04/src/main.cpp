@@ -138,11 +138,14 @@ main ( int argc, char * argv[] )
 		int size = optMemorySize;
 
 		printf("test1");
-
-		int* A = (int*) malloc(sizeof(int) * size * size);
+		
+		int* A;
+		A = (int*) malloc(sizeof(int) * size * size);
 		printf("test2");
-		int* B = (int*) malloc(sizeof(int) * size * size);
-		int* C = (int*) malloc(sizeof(int) * size * size);
+		int* B;
+		B = (int*) malloc(sizeof(int) * size * size);
+		int* C;
+		C = (int*) malloc(sizeof(int) * size * size);
 
 		for (int i = 0; i < size; i++){
 			for (int j = 0; j < size; j++){
