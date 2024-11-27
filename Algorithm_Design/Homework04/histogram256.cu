@@ -126,7 +126,7 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
   //d_PartialHistograms[0] = s_WCHist[0];
 
   //Cycle through the entire data set, update subhistograms for each warp
-  const uint tag = threadIdx.x << (UINT_BITS - LOG2_WARP_SIZE)
+  //const uint tag = threadIdx.x << (UINT_BITS - LOG2_WARP_SIZE)
   cg::sync(cta);
 
   uint binWidth = UINT_MAX / numBins;
