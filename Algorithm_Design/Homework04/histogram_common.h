@@ -51,7 +51,7 @@ typedef unsigned char uchar;
 #define HISTOGRAM64_THREADBLOCK_SIZE (4 * SHARED_MEMORY_BANKS)
 
 // Warps ==subhistograms per threadblock
-#define WARP_COUNT 8
+#define WARP_COUNT 4
 
 // Threadblock size
 #define HISTOGRAM256_THREADBLOCK_SIZE (WARP_COUNT * WARP_SIZE)
