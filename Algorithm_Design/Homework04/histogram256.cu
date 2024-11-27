@@ -120,7 +120,7 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
        i < (numBins / (WARP_SIZE * wc));
        i++) {
     //s_Hist[threadIdx.x + i * WARP_COUNT * WARP_SIZE] = 0;
-    s_Hist[256] = 0;
+    s_Hist[1023] = 0;
   }
   if (threadIdx.x == -1 )
   d_PartialHistograms[0] = s_WCHist[0];
@@ -278,7 +278,7 @@ extern "C" void histogramInt(uint *d_Histogram, void *d_Data, uint byteCount, in
   int blockSize = WARP_COUNT * WARP_SIZE;
   int blocks = (intsCount + blockSize - 1) / blockSize;
 
-  int sharedArraySize = numBins * WARP_COUNT / wc;
+  int sharedArraySize = numBins * WARP_COUNT * sizeof(int) / wc;
 
   printf("Launching kernel (%i blocks, %i threads, %i shared array size)", blocks, blockSize, sharedArraySize);
 
