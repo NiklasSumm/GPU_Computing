@@ -135,24 +135,24 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
        pos += UMUL(blockDim.x, gridDim.x)) {
     int data = d_Data[pos];
 
-    int binIdx = data / binWidth;
+    int binIdx = (uint)data / binWidth;
     
     atomicAdd(s_WCHist + binIdx, 1);
   }
 
   // Merge per-warp histograms into per-block and write to global memory
-  cg::sync(cta);
-
-  for (uint bin = threadIdx.x; bin < numBins;
-       bin += WARP_COUNT * WARP_SIZE) {
-    uint sum = 0;
-
-    for (uint i = 0; i < (WARP_COUNT >> log2wc); i++) {
-      sum += s_Hist[bin + i * numBins] & TAG_MASK;
-    }
-
-    d_PartialHistograms[blockIdx.x * numBins + bin] = sum;
-  }
+  //cg::sync(cta);
+//
+  //for (uint bin = threadIdx.x; bin < numBins;
+  //     bin += WARP_COUNT * WARP_SIZE) {
+  //  uint sum = 0;
+//
+  //  for (uint i = 0; i < (WARP_COUNT >> log2wc); i++) {
+  //    sum += s_Hist[bin + i * numBins];
+  //  }
+//
+  //  d_PartialHistograms[blockIdx.x * numBins + bin] = sum;
+  //}
 
 }
 
