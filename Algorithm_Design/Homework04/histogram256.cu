@@ -112,18 +112,18 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
   uint *s_WCHist =
       s_Hist + histIdx * numBins;
 
-  if (threadIdx.x == -1 )
-    d_PartialHistograms[0] = s_WCHist[0];
 
-//
-//// Clear shared memory storage for current threadblock before processing
-////#pragma unroll
-//
-  //for (uint i = 0;
-  //     i < (numBins / (WARP_SIZE * wc));
-  //     i++) {
-  //  s_Hist[threadIdx.x + i * WARP_COUNT * WARP_SIZE] = 0;
-  //}
+// Clear shared memory storage for current threadblock before processing
+//#pragma unroll
+
+  for (uint i = 0;
+       i < (numBins / (WARP_SIZE * wc));
+       i++) {
+    s_Hist[threadIdx.x + i * WARP_COUNT * WARP_SIZE] = 0;
+  }
+
+  if (threadIdx.x == -1 )
+  d_PartialHistograms[0] = s_WCHist[0];
 
   // Cycle through the entire data set, update subhistograms for each warp
   //const uint tag = threadIdx.x << (UINT_BITS - LOG2_WARP_SIZE);
