@@ -120,7 +120,7 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
        i < (numBins / (WARP_SIZE * wc));
        i++) {
     //s_Hist[threadIdx.x + i * WARP_COUNT * WARP_SIZE] = 0;
-    s_Hist[255] = 0;
+    s_Hist[256] = 0;
   }
   if (threadIdx.x == -1 )
   d_PartialHistograms[0] = s_WCHist[0];
