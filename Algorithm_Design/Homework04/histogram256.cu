@@ -137,8 +137,9 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
     int binIdx = (uint)data / binWidth;
     
     atomicAdd(s_WCHist + binIdx, 1);
+  }
   
-   Merge per-warp histograms into per-block and write to global memory
+  //Merge per-warp histograms into per-block and write to global memory
   cg::sync(cta);
 
   for (uint bin = threadIdx.x; bin < numBins;
