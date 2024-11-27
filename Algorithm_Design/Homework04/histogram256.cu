@@ -280,7 +280,7 @@ extern "C" void histogramInt(uint *d_Histogram, void *d_Data, uint byteCount, in
 
   int sharedArraySize = numBins * WARP_COUNT / wc;
 
-  printf("Launching kernel (%i blocks, %i threads)", blocks, blockSize);
+  printf("Launching kernel (%i blocks, %i threads, %i shared array size)", blocks, blockSize, sharedArraySize);
 
   histogramIntKernel<<<blocks,
                        blockSize,
