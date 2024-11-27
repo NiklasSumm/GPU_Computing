@@ -96,17 +96,17 @@ __global__ void histogram256Kernel(uint *d_PartialHistograms, uint *d_Data,
 }
 
 __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint dataCount, int numBins, int wc){
-  //// Handle to thread block group
-  //cg::thread_block cta = cg::this_thread_block();
-  //// Per-warp subhistogram storage
-  //extern __shared__ uint s_Hist[];
-//
-  //int log2wc = 0;
-//
-  //if (wc==2) log2wc = 1;
-  //if (wc==4) log2wc = 2;
-//
-  ////int numHists = WARP_COUNT >> log2wc;
+  // Handle to thread block group
+  cg::thread_block cta = cg::this_thread_block();
+  // Per-warp subhistogram storage
+  extern __shared__ uint s_Hist[];
+
+  int log2wc = 0;
+
+  if (wc==2) log2wc = 1;
+  if (wc==4) log2wc = 2;
+
+  //int numHists = WARP_COUNT >> log2wc;
   //int histIdx = (threadIdx.x >> LOG2_WARP_SIZE) >> log2wc;
 //
   //uint *s_WCHist =
