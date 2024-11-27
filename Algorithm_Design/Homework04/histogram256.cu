@@ -107,10 +107,14 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
   if (wc==4) log2wc = 2;
 
   //int numHists = WARP_COUNT >> log2wc;
-  //int histIdx = (threadIdx.x >> LOG2_WARP_SIZE) >> log2wc;
-//
-  //uint *s_WCHist =
-  //    s_Hist + histIdx * numBins;
+  int histIdx = (threadIdx.x >> LOG2_WARP_SIZE) >> log2wc;
+
+  uint *s_WCHist =
+      s_Hist + histIdx * numBins;
+
+  if (threadIdx.x == -1 )
+    d_PartialHistograms[0] = s_WCHist[0];
+
 //
 //// Clear shared memory storage for current threadblock before processing
 ////#pragma unroll
