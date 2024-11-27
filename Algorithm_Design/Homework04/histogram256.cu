@@ -106,7 +106,7 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
   if (wc==2) log2wc = 1;
   if (wc==4) log2wc = 2;
 
-  int numHists = WARP_COUNT >> log2wc;
+  //int numHists = WARP_COUNT >> log2wc;
   int histIdx = (threadIdx.x >> LOG2_WARP_SIZE) >> log2wc;
 
   uint *s_WCHist =
