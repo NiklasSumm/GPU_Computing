@@ -99,7 +99,7 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
   // Per-warp subhistogram storage
-  __shared__ uint s_Hist[];
+  extern __shared__ uint s_Hist[];
 
   int log2wc = 0;
 
