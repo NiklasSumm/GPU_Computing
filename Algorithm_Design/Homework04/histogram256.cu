@@ -99,7 +99,7 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
   // Per-warp subhistogram storage
-  __shared__ uint s_Hist[8192 * WARP_COUNT];
+  __shared__ uint s_Hist[];
 
   int log2wc = 0;
 
@@ -271,8 +271,11 @@ extern "C" void histogramInt(uint *d_Histogram, void *d_Data, uint byteCount, in
   int blockSize = WARP_COUNT * WARP_SIZE;
   int blocks = (intsCount + blockSize - 1) / blockSize;
 
+  int sharedArraySize = numBins * WARP_COUNT / wc;
+
   histogramIntKernel<<<blocks,
-                       blockSize>>>(
+                       blockSize,
+                       sharedArraySize>>>(
       d_PartialHistograms, (int *)d_Data, byteCount / sizeof(int), numBins, wc);
   getLastCudaError("histogram256Kernel() execution failed\n");
 
