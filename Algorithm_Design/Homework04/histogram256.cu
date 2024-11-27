@@ -95,7 +95,7 @@ __global__ void histogram256Kernel(uint *d_PartialHistograms, uint *d_Data,
   }
 }
 
-__global__ void HistogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint dataCount, int numBins, int wc){
+__global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint dataCount, int numBins, int wc){
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
   // Per-warp subhistogram storage
