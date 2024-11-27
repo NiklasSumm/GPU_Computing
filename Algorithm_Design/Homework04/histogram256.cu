@@ -238,17 +238,17 @@ extern "C" void closeHistogram256(void) {
 
 // Internal memory allocation
 extern "C" void initHistogramInt(uint byteCount, int numBins) {
-  //uint intsCount = byteCount / sizeof(int);
-  //int blockSize = WARP_COUNT * WARP_SIZE;
-  //int blocks = (intsCount + blockSize - 1) / blockSize;
-//
-  //checkCudaErrors(cudaMalloc(
-  //    (void **)&d_PartialHistograms,
-  //    blocks * numBins * sizeof(int)));
+  uint intsCount = byteCount / sizeof(int);
+  int blockSize = WARP_COUNT * WARP_SIZE;
+  int blocks = (intsCount + blockSize - 1) / blockSize;
 
   checkCudaErrors(cudaMalloc(
       (void **)&d_PartialHistograms,
-      PARTIAL_HISTOGRAM256_COUNT * HISTOGRAM256_BIN_COUNT * sizeof(int)));
+      blocks * numBins * sizeof(int)));
+
+  //checkCudaErrors(cudaMalloc(
+  //    (void **)&d_PartialHistograms,
+  //    PARTIAL_HISTOGRAM256_COUNT * HISTOGRAM256_BIN_COUNT * sizeof(int)));
 }
 
 // Internal memory deallocation
@@ -271,32 +271,34 @@ extern "C" void histogram256(uint *d_Histogram, void *d_Data, uint byteCount) {
 extern "C" void histogramInt(uint *d_Histogram, void *d_Data, uint byteCount, int numBins, int wc) {
   assert(byteCount % sizeof(uint) == 0);
 
-  //uint intsCount = byteCount / sizeof(int);
-  //int blockSize = WARP_COUNT * WARP_SIZE;
-  //int blocks = (intsCount + blockSize - 1) / blockSize;
-//
-  //int sharedArraySize = numBins * WARP_COUNT / wc;
-//
-  //histogramIntKernel<<<blocks,
-  //                     blockSize,
-  //                     sharedArraySize>>>(
-  //    d_PartialHistograms, (int *)d_Data, byteCount / sizeof(int), numBins, wc);
-  //getLastCudaError("histogram256Kernel() execution failed\n");
-//
-  //mergeHistogramIntKernel<<<numBins, MERGE_THREADBLOCK_SIZE>>>(
-  //    d_Histogram, d_PartialHistograms, blocks);
-  //getLastCudaError("mergeHistogram256Kernel() execution failed\n");
+  uint intsCount = byteCount / sizeof(int);
+  int blockSize = WARP_COUNT * WARP_SIZE;
+  int blocks = (intsCount + blockSize - 1) / blockSize;
 
   int sharedArraySize = numBins * WARP_COUNT / wc;
 
-  histogramIntKernel<<<PARTIAL_HISTOGRAM256_COUNT,
-                       HISTOGRAM256_THREADBLOCK_SIZE,
-                       sharedArraySize
-                       >>>(
+  printf("Launching kernel (%i blocks, %i threads)", blocks, blockSize);
+
+  histogramIntKernel<<<blocks,
+                       blockSize,
+                       sharedArraySize>>>(
       d_PartialHistograms, (int *)d_Data, byteCount / sizeof(int), numBins, wc);
   getLastCudaError("histogram256Kernel() execution failed\n");
 
-  mergeHistogramIntKernel<<<HISTOGRAM256_BIN_COUNT, MERGE_THREADBLOCK_SIZE>>>(
-      d_Histogram, d_PartialHistograms, PARTIAL_HISTOGRAM256_COUNT);
+  mergeHistogramIntKernel<<<numBins, MERGE_THREADBLOCK_SIZE>>>(
+      d_Histogram, d_PartialHistograms, blocks);
   getLastCudaError("mergeHistogram256Kernel() execution failed\n");
+
+  //int sharedArraySize = numBins * WARP_COUNT / wc;
+//
+  //histogramIntKernel<<<PARTIAL_HISTOGRAM256_COUNT,
+  //                     HISTOGRAM256_THREADBLOCK_SIZE,
+  //                     sharedArraySize
+  //                     >>>(
+  //    d_PartialHistograms, (int *)d_Data, byteCount / sizeof(int), numBins, wc);
+  //getLastCudaError("histogram256Kernel() execution failed\n");
+//
+  //mergeHistogramIntKernel<<<HISTOGRAM256_BIN_COUNT, MERGE_THREADBLOCK_SIZE>>>(
+  //    d_Histogram, d_PartialHistograms, PARTIAL_HISTOGRAM256_COUNT);
+  //getLastCudaError("mergeHistogram256Kernel() execution failed\n");
 }
