@@ -94,8 +94,8 @@ int main(int argc, char **argv) {
   printf("Initializing data...\n");
   printf("...allocating CPU memory.\n");
   h_Data = (uchar *)malloc(byteCount);
-  h_HistogramCPU = (uint *)malloc(HISTOGRAM256_BIN_COUNT * sizeof(uint));
-  h_HistogramGPU = (uint *)malloc(HISTOGRAM256_BIN_COUNT * sizeof(uint));
+  h_HistogramCPU = (uint *)malloc(numBins * sizeof(int));
+  h_HistogramGPU = (uint *)malloc(numBins * sizeof(int));
 
   printf("...generating input data\n");
   srand(2009);
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
   printf("...allocating GPU memory and copying input data\n\n");
   checkCudaErrors(cudaMalloc((void **)&d_Data, byteCount));
   checkCudaErrors(
-      cudaMalloc((void **)&d_Histogram, HISTOGRAM256_BIN_COUNT * sizeof(uint)));
+      cudaMalloc((void **)&d_Histogram, numBins * sizeof(int)));
   checkCudaErrors(
       cudaMemcpy(d_Data, h_Data, byteCount, cudaMemcpyHostToDevice));
 
@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
     printf("Initializing int histogram (%i bins)...\n", numBins);
     initHistogramInt(byteCount, numBins);
 
-    printf("Running 256-bin GPU histogram for %u bytes (%u runs)...\n\n",
+    printf("Running bin GPU histogram for %u bytes (%u runs)...\n\n",
            byteCount, numRuns);
 
     for (int iter = -1; iter < numRuns; iter++) {
