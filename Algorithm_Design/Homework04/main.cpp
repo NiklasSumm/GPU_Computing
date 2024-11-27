@@ -216,59 +216,59 @@ int main(int argc, char **argv) {
     printf("Shutting down 256-bin histogram...\n\n\n");
     closeHistogram256();
   }
-
-  {
-    printf("Initializing int histogram (%i bins)...\n", numBins);
-    initHistogramInt(byteCount, numBins);
-
-    printf("Running 256-bin GPU histogram for %u bytes (%u runs)...\n\n",
-           byteCount, numRuns);
-
-    for (int iter = -1; iter < numRuns; iter++) {
-      // iter == -1 -- warmup iteration
-      if (iter == 0) {
-        checkCudaErrors(cudaDeviceSynchronize());
-        sdkResetTimer(&hTimer);
-        sdkStartTimer(&hTimer);
-      }
-
-      histogramInt(d_Histogram, d_Data, byteCount, numBins, wc);
-    }
-
-    cudaDeviceSynchronize();
-    sdkStopTimer(&hTimer);
-    double dAvgSecs =
-        1.0e-3 * (double)sdkGetTimerValue(&hTimer) / (double)numRuns;
-    printf("histogram256() time (average) : %.5f sec, %.4f MB/sec\n\n",
-           dAvgSecs, ((double)byteCount * 1.0e-6) / dAvgSecs);
-    printf(
-        "histogram256, Throughput = %.4f MB/s, Time = %.5f s, Size = %u Bytes, "
-        "NumDevsUsed = %u, Workgroup = %u\n",
-        (1.0e-6 * (double)byteCount / dAvgSecs), dAvgSecs, byteCount, 1,
-        HISTOGRAM256_THREADBLOCK_SIZE);
-
-    //printf("\nValidating GPU results...\n");
-    //printf(" ...reading back GPU results\n");
-    //checkCudaErrors(cudaMemcpy(h_HistogramGPU, d_Histogram,
-    //                           HISTOGRAM256_BIN_COUNT * sizeof(uint),
-    //                           cudaMemcpyDeviceToHost));
 //
-    //printf(" ...histogram256CPU()\n");
-    //histogram256CPU(h_HistogramCPU, h_Data, byteCount);
+//  {
+//    printf("Initializing int histogram (%i bins)...\n", numBins);
+//    initHistogramInt(byteCount, numBins);
 //
-    //printf(" ...comparing the results\n");
+//    printf("Running 256-bin GPU histogram for %u bytes (%u runs)...\n\n",
+//           byteCount, numRuns);
 //
-    //for (uint i = 0; i < HISTOGRAM256_BIN_COUNT; i++)
-    //  if (h_HistogramGPU[i] != h_HistogramCPU[i]) {
-    //    PassFailFlag = 0;
-    //  }
+//    for (int iter = -1; iter < numRuns; iter++) {
+//      // iter == -1 -- warmup iteration
+//      if (iter == 0) {
+//        checkCudaErrors(cudaDeviceSynchronize());
+//        sdkResetTimer(&hTimer);
+//        sdkStartTimer(&hTimer);
+//      }
 //
-    //printf(PassFailFlag ? " ...256-bin histograms match\n\n"
-    //                    : " ***256-bin histograms do not match!!!***\n\n");
+//      histogramInt(d_Histogram, d_Data, byteCount, numBins, wc);
+//    }
 //
-    //printf("Shutting down 256-bin histogram...\n\n\n");
-    closeHistogramInt();
-  }
+//    cudaDeviceSynchronize();
+//    sdkStopTimer(&hTimer);
+//    double dAvgSecs =
+//        1.0e-3 * (double)sdkGetTimerValue(&hTimer) / (double)numRuns;
+//    printf("histogram256() time (average) : %.5f sec, %.4f MB/sec\n\n",
+//           dAvgSecs, ((double)byteCount * 1.0e-6) / dAvgSecs);
+//    printf(
+//        "histogram256, Throughput = %.4f MB/s, Time = %.5f s, Size = %u Bytes, "
+//        "NumDevsUsed = %u, Workgroup = %u\n",
+//        (1.0e-6 * (double)byteCount / dAvgSecs), dAvgSecs, byteCount, 1,
+//        HISTOGRAM256_THREADBLOCK_SIZE);
+//
+//    //printf("\nValidating GPU results...\n");
+//    //printf(" ...reading back GPU results\n");
+//    //checkCudaErrors(cudaMemcpy(h_HistogramGPU, d_Histogram,
+//    //                           HISTOGRAM256_BIN_COUNT * sizeof(uint),
+//    //                           cudaMemcpyDeviceToHost));
+////
+//    //printf(" ...histogram256CPU()\n");
+//    //histogram256CPU(h_HistogramCPU, h_Data, byteCount);
+////
+//    //printf(" ...comparing the results\n");
+////
+//    //for (uint i = 0; i < HISTOGRAM256_BIN_COUNT; i++)
+//    //  if (h_HistogramGPU[i] != h_HistogramCPU[i]) {
+//    //    PassFailFlag = 0;
+//    //  }
+////
+//    //printf(PassFailFlag ? " ...256-bin histograms match\n\n"
+//    //                    : " ***256-bin histograms do not match!!!***\n\n");
+////
+//    //printf("Shutting down 256-bin histogram...\n\n\n");
+//    closeHistogramInt();
+//  }
 
   printf("Shutting down...\n");
   sdkDeleteTimer(&hTimer);
