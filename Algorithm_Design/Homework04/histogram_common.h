@@ -82,4 +82,8 @@ extern "C" void histogram64(uint *d_Histogram, void *d_Data, uint byteCount);
 
 extern "C" void histogram256(uint *d_Histogram, void *d_Data, uint byteCount);
 
+extern "C" void initHistogramInt(uint byteCount, int numBins);
+extern "C" void closeHistogramInt(void);
+extern "C" void histogramInt(uint *d_Histogram, void *d_Data, uint byteCount, int numBins, int wc);
+
 #endif
