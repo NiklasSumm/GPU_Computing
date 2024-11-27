@@ -96,30 +96,30 @@ __global__ void histogram256Kernel(uint *d_PartialHistograms, uint *d_Data,
 }
 
 __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint dataCount, int numBins, int wc){
-  // Handle to thread block group
-  cg::thread_block cta = cg::this_thread_block();
-  // Per-warp subhistogram storage
-  extern __shared__ uint s_Hist[];
-
-  int log2wc = 0;
-
-  if (wc==2) log2wc = 1;
-  if (wc==4) log2wc = 2;
-
-  //int numHists = WARP_COUNT >> log2wc;
-  int histIdx = (threadIdx.x >> LOG2_WARP_SIZE) >> log2wc;
-
-  uint *s_WCHist =
-      s_Hist + histIdx * numBins;
-
-// Clear shared memory storage for current threadblock before processing
-//#pragma unroll
-
-  for (uint i = 0;
-       i < (numBins / (WARP_SIZE * wc));
-       i++) {
-    s_Hist[threadIdx.x + i * WARP_COUNT * WARP_SIZE] = 0;
-  }
+  //// Handle to thread block group
+  //cg::thread_block cta = cg::this_thread_block();
+  //// Per-warp subhistogram storage
+  //extern __shared__ uint s_Hist[];
+//
+  //int log2wc = 0;
+//
+  //if (wc==2) log2wc = 1;
+  //if (wc==4) log2wc = 2;
+//
+  ////int numHists = WARP_COUNT >> log2wc;
+  //int histIdx = (threadIdx.x >> LOG2_WARP_SIZE) >> log2wc;
+//
+  //uint *s_WCHist =
+  //    s_Hist + histIdx * numBins;
+//
+//// Clear shared memory storage for current threadblock before processing
+////#pragma unroll
+//
+  //for (uint i = 0;
+  //     i < (numBins / (WARP_SIZE * wc));
+  //     i++) {
+  //  s_Hist[threadIdx.x + i * WARP_COUNT * WARP_SIZE] = 0;
+  //}
 
   // Cycle through the entire data set, update subhistograms for each warp
   //const uint tag = threadIdx.x << (UINT_BITS - LOG2_WARP_SIZE);
