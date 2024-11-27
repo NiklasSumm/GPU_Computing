@@ -293,7 +293,7 @@ extern "C" void histogramInt(uint *d_Histogram, void *d_Data, uint byteCount, in
                        HISTOGRAM256_THREADBLOCK_SIZE,
                        sharedArraySize
                        >>>(
-      d_PartialHistograms, (int *)d_Data, byteCount / sizeof(int));
+      d_PartialHistograms, (int *)d_Data, byteCount / sizeof(int), numBins, wc);
   getLastCudaError("histogram256Kernel() execution failed\n");
 
   mergeHistogramIntKernel<<<HISTOGRAM256_BIN_COUNT, MERGE_THREADBLOCK_SIZE>>>(
