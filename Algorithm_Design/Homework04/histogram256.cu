@@ -101,8 +101,13 @@ __global__ void HistogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
   // Per-warp subhistogram storage
   __shared__ uint s_Hist[8192 * WARP_COUNT];
 
-  int numHists = WARP_COUNT >> log2(wc);
-  int histIdx = (threadIdx.x >> LOG2_WARP_SIZE) >> log2(wc);
+  int log2wc = 0;
+
+  if (wc==2) log2wc = 1;
+  if (wc==4) log2wc = 2;
+
+  int numHists = WARP_COUNT >> log2wc;
+  int histIdx = (threadIdx.x >> LOG2_WARP_SIZE) >> log2wc;
 
   uint *s_WCHist =
       s_Hist + histIdx * numBins;
@@ -139,7 +144,7 @@ __global__ void HistogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
        bin += WARP_COUNT * WARP_SIZE) {
     uint sum = 0;
 
-    for (uint i = 0; i < (WARP_COUNT >> log2(wc)); i++) {
+    for (uint i = 0; i < (WARP_COUNT >> log2wc); i++) {
       sum += s_Hist[bin + i * numBins] & TAG_MASK;
     }
 
@@ -233,7 +238,7 @@ extern "C" void closeHistogram256(void) {
 
 // Internal memory allocation
 extern "C" void initHistogramInt(uint byteCount, int numBins) {
-  uint intsCount = bytesCount / sizeof(int);
+  uint intsCount = byteCount / sizeof(int);
   int blockSize = WARP_COUNT * WARP_SIZE;
   int blocks = (intsCount + blockSize - 1) / blockSize;
 
@@ -262,7 +267,7 @@ extern "C" void histogram256(uint *d_Histogram, void *d_Data, uint byteCount) {
 extern "C" void histogramInt(uint *d_Histogram, void *d_Data, uint byteCount, int numBins, int wc) {
   assert(byteCount % sizeof(uint) == 0);
 
-  uint intsCount = bytesCount / sizeof(int);
+  uint intsCount = byteCount / sizeof(int);
   int blockSize = WARP_COUNT * WARP_SIZE;
   int blocks = (intsCount + blockSize - 1) / blockSize;
 
