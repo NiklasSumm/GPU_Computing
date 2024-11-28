@@ -26,7 +26,7 @@
  */
 
 #include <assert.h>
-#include <stdlib.h>
+#include <climits>
 #include "histogram_common.h"
 
 extern "C" void histogram64CPU(uint *h_Histogram, void *h_Data,
