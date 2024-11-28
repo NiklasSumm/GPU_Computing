@@ -70,6 +70,9 @@ extern "C" void histogram64CPU(uint *h_Histogram, void *h_Data, uint byteCount);
 extern "C" void histogram256CPU(uint *h_Histogram, void *h_Data,
                                 uint byteCount);
 
+extern "C" void histogramIntCPU(uint *h_Histogram, void *h_Data,
+                                uint byteCount, int numBins);
+
 ////////////////////////////////////////////////////////////////////////////////
 // GPU histogram
 ////////////////////////////////////////////////////////////////////////////////
