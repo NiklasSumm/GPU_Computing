@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
     printf(" ...comparing the results\n");
 
     for (uint i = 0; i < numBins; i++){
-      printf("%i - %i\n", h_HistogramGPU[i], h_HistogramCPU[i]);
+      //printf("%i - %i\n", h_HistogramGPU[i], h_HistogramCPU[i]);
       if (h_HistogramGPU[i] != h_HistogramCPU[i]) {
         PassFailFlag = 0;
       }
