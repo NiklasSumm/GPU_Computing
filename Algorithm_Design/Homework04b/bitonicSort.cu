@@ -268,7 +268,7 @@ extern "C" uint bitonicSort(uint *d_DstKey, uint *d_DstVal, uint *d_SrcKey,
         } else {
           bitonicMergeShared<<<blockCount, threadCount>>>(
               d_DstKey, d_DstVal, d_DstKey, d_DstVal, arrayLength, size, dir);
-          break;
+          //break;
         }
   }
 
