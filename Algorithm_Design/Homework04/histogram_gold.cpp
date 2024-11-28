@@ -57,3 +57,28 @@ extern "C" void histogram256CPU(uint *h_Histogram, void *h_Data,
     h_Histogram[(data >> 24) & 0xFFU]++;
   }
 }
+
+//Reference implementation on CPU
+extern "C" void histogramIntCPU(uint *h_Histogram, void *h_Data,
+                                uint byteCount, int numBins) {
+  for (uint i = 0; i < HISTOGRAM256_BIN_COUNT; i++) h_Histogram[i] = 0;
+
+  assert(sizeof(uint) == 4 && (byteCount % 4) == 0);
+
+  int intCount = byteCount / sizeof(int);
+
+  //determine the value range of each bin
+  uint binWidth = UINT_MAX / numBins;
+
+  for (uint i = 0; i < intCount; i++) {
+    uint data = ((int *)h_Data)[i];
+
+    //we interpret data as a uint so we dont have to deal with negative cases
+    //by doing that the negative values will be sorted into the higher half of the histogram order from lowest (biggest negative number) to highest (smalles negativ number)
+    //to get the ordering coorect we need to swap the lower and upper half which is done by adding numBins/2 to the binIndex and then doing the modulo operation
+    uint binIdx = (uint)data / binWidth;
+    binIndex = (binIndex + numBins / 2) % numBins;
+
+    h_Histogram[binIndex]++;
+  }
+}
