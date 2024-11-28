@@ -95,46 +95,49 @@ __global__ void histogram256Kernel(uint *d_PartialHistograms, uint *d_Data,
   }
 }
 
+//////////////////////////////////////////////////////////////
+//The kernel modified as described in the exercise sheet
+//////////////////////////////////////////////////////////////
 __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint dataCount, int numBins, int wc){
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
   // Per-warp subhistogram storage
   extern __shared__ uint s_Hist[];
 
+  //getting log2 of wc
   int log2wc = 0;
-
   if (wc==2) log2wc = 1;
   if (wc==4) log2wc = 2;
 
-  //int numHists = WARP_COUNT >> log2wc;
+  //shared memory contains multiple historgrams, one for each group of wc warps
+  //here we detemine which one to use (first one, second one and so on...)
   int histIdx = (threadIdx.x >> LOG2_WARP_SIZE) >> log2wc;
 
+  //here we get the histogram for the group of wc warps that this thread belongs to
   uint *s_WCHist = & ( s_Hist [histIdx * numBins] );
-      //s_Hist + histIdx * numBins;
 
-
-// Clear shared memory storage for current threadblock before processing
-//#pragma unroll
-
+  // Clear shared memory storage for current threadblock before processing
   for (uint i = 0;
        i < (numBins / (WARP_SIZE * wc));
        i++) {
     s_Hist[threadIdx.x + i * WARP_COUNT * WARP_SIZE] = 0;
   }
-  //if (threadIdx.x == -1 )
-  //d_PartialHistograms[0] = s_WCHist[0];
 
   //Cycle through the entire data set, update subhistograms for each warp
-  //const uint tag = threadIdx.x << (UINT_BITS - LOG2_WARP_SIZE)
   cg::sync(cta);
 
+  //determine the value range of each bin
   uint binWidth = UINT_MAX / numBins;
 
   for (uint pos = UMAD(blockIdx.x, blockDim.x, threadIdx.x); pos < dataCount;
        pos += UMUL(blockDim.x, gridDim.x)) {
     int data = d_Data[pos];
 
-    int binIdx = (uint)data / binWidth;
+    //we interpret data as a uint so we dont have to deal with negative cases
+    //by doing that the negative values will be sorted into the higher half of the histogram order from lowest (biggest negative number) to highest (smalles negativ number)
+    //to get the ordering coorect we need to swap the lower and upper half which is done by adding numBins/2 to the binIndex and then doing the modulo operation
+    uint binIdx = (uint)data / binWidth;
+    binIndex = (binIndex + numBins / 2) % numBins;
     
     atomicAdd(s_WCHist + binIdx, 1);
   }
@@ -142,6 +145,7 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
   //Merge per-warp histograms into per-block and write to global memory
   cg::sync(cta);
 
+  //Here we merge all the partial histograms from this block and writing it to global memory
   for (uint bin = threadIdx.x; bin < numBins;
        bin += WARP_COUNT * WARP_SIZE) {
     uint sum = 0;
@@ -193,14 +197,14 @@ __global__ void mergeHistogram256Kernel(uint *d_Histogram,
 
 __global__ void mergeHistogramIntKernel(uint *d_Histogram,
                                         uint *d_PartialHistograms,
-                                        uint histogramCount) {
+                                        uint histogramCount, int numBins) {
   // Handle to thread block group
   cg::thread_block cta = cg::this_thread_block();
 
   uint sum = 0;
 
   for (uint i = threadIdx.x; i < histogramCount; i += MERGE_THREADBLOCK_SIZE) {
-    sum += d_PartialHistograms[blockIdx.x + i * HISTOGRAM256_BIN_COUNT];
+    sum += d_PartialHistograms[blockIdx.x + i * numBins];
   }
 
   __shared__ uint data[MERGE_THREADBLOCK_SIZE];
@@ -247,10 +251,6 @@ extern "C" void initHistogramInt(uint byteCount, int numBins) {
   checkCudaErrors(cudaMalloc(
       (void **)&d_PartialHistograms,
       blocks * numBins * sizeof(int)));
-
-  //checkCudaErrors(cudaMalloc(
-  //    (void **)&d_PartialHistograms,
-  //    PARTIAL_HISTOGRAM256_COUNT * HISTOGRAM256_BIN_COUNT * sizeof(int)));
 }
 
 // Internal memory deallocation
@@ -277,30 +277,19 @@ extern "C" void histogramInt(uint *d_Histogram, void *d_Data, uint byteCount, in
   int blockSize = WARP_COUNT * WARP_SIZE;
   int blocks = (intsCount + blockSize - 1) / blockSize;
 
-  int sharedArraySize = numBins * WARP_COUNT * sizeof(int) / wc;
+  int sharedArraySize = numBins * WARP_COUNT * sizeof(uint) / wc;
 
-  printf("Launching kernel (%i blocks, %i threads, %i shared array size)", blocks, blockSize, sharedArraySize);
+  //printf("Launching kernel (%i blocks, %i threads, %i shared array size)", blocks, blockSize, sharedArraySize);
 
+  //launching kernel with one thread per int in d_Data
   histogramIntKernel<<<blocks,
                        blockSize,
                        sharedArraySize>>>(
       d_PartialHistograms, (int *)d_Data, byteCount / sizeof(int), numBins, wc);
   getLastCudaError("histogram256Kernel() execution failed\n");
 
-  mergeHistogramIntKernel<<<numBins, MERGE_THREADBLOCK_SIZE>>>(
-      d_Histogram, d_PartialHistograms, blocks);
+  //launching kernel with one thread per bin
+  mergeHistogramIntKernel<<<numBins / MERGE_THREADBLOCK_SIZE, MERGE_THREADBLOCK_SIZE>>>(
+      d_Histogram, d_PartialHistograms, blocks, numBins);
   getLastCudaError("mergeHistogram256Kernel() execution failed\n");
-
-  //int sharedArraySize = numBins * WARP_COUNT / wc;
-//
-  //histogramIntKernel<<<PARTIAL_HISTOGRAM256_COUNT,
-  //                     HISTOGRAM256_THREADBLOCK_SIZE,
-  //                     sharedArraySize
-  //                     >>>(
-  //    d_PartialHistograms, (int *)d_Data, byteCount / sizeof(int), numBins, wc);
-  //getLastCudaError("histogram256Kernel() execution failed\n");
-//
-  //mergeHistogramIntKernel<<<HISTOGRAM256_BIN_COUNT, MERGE_THREADBLOCK_SIZE>>>(
-  //    d_Histogram, d_PartialHistograms, PARTIAL_HISTOGRAM256_COUNT);
-  //getLastCudaError("mergeHistogram256Kernel() execution failed\n");
 }
