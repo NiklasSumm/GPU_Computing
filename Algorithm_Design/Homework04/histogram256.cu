@@ -137,7 +137,7 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
     //by doing that the negative values will be sorted into the higher half of the histogram order from lowest (biggest negative number) to highest (smalles negativ number)
     //to get the ordering coorect we need to swap the lower and upper half which is done by adding numBins/2 to the binIndex and then doing the modulo operation
     uint binIdx = (uint)data / binWidth;
-    binIndex = (binIndex + numBins / 2) % numBins;
+    binIdx = (binIndex + numBins / 2) % numBins;
     
     atomicAdd(s_WCHist + binIdx, 1);
   }
