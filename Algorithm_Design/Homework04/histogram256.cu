@@ -294,8 +294,8 @@ extern "C" void histogramInt(uint *d_Histogram, void *d_Data, uint byteCount, in
       d_PartialHistograms, (int *)d_Data, byteCount / sizeof(int), numBins, wc);
   getLastCudaError("histogram256Kernel() execution failed\n");
 
-  //launching kernel with one thread per bin
-  mergeHistogramIntKernel<<<numBins / MERGE_THREADBLOCK_SIZE, MERGE_THREADBLOCK_SIZE>>>(
+  //launching kernel with one block per bin
+  mergeHistogramIntKernel<<<numBins, MERGE_THREADBLOCK_SIZE>>>(
       d_Histogram, d_PartialHistograms, blocks, numBins);
   getLastCudaError("mergeHistogram256Kernel() execution failed\n");
 }
