@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     printf("\nValidating GPU results...\n");
     printf(" ...reading back GPU results\n");
     checkCudaErrors(cudaMemcpy(h_HistogramGPU, d_Histogram,
-                               HISTOGRAM256_BIN_COUNT * sizeof(uint),
+                               numBins * sizeof(uint),
                                cudaMemcpyDeviceToHost));
 
     printf(" ...histogramIntCPU()\n");
@@ -152,10 +152,11 @@ int main(int argc, char **argv) {
 
     printf(" ...comparing the results\n");
 
-    for (uint i = 0; i < HISTOGRAM256_BIN_COUNT; i++)
+    for (uint i = 0; i < numBins; i++){
       if (h_HistogramGPU[i] != h_HistogramCPU[i]) {
         PassFailFlag = 0;
       }
+    }
 
     printf(PassFailFlag ? " ...int histograms match\n\n"
                         : " ***int histograms do not match!!!***\n\n");
