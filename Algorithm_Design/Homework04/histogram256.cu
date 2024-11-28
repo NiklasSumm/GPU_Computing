@@ -157,6 +157,12 @@ __global__ void histogramIntKernel(uint *d_PartialHistograms, int *d_Data, uint 
     d_PartialHistograms[blockIdx.x * numBins + bin] = sum;
   }
 
+  if (blockIdx.x == 0 && threadIdx.x == 0){
+    for (int i = 0; i < numBins; i++){
+      printf("%i\n", d_PartialHistograms[i]);
+    }
+  }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
