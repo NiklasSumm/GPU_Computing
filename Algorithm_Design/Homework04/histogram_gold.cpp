@@ -62,7 +62,7 @@ extern "C" void histogram256CPU(uint *h_Histogram, void *h_Data,
 //Reference implementation on CPU
 extern "C" void histogramIntCPU(uint *h_Histogram, void *h_Data,
                                 uint byteCount, int numBins) {
-  for (uint i = 0; i < HISTOGRAM256_BIN_COUNT; i++) h_Histogram[i] = 0;
+  for (uint i = 0; i < numBins; i++) h_Histogram[i] = 0;
 
   assert(sizeof(uint) == 4 && (byteCount % 4) == 0);
 
