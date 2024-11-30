@@ -228,6 +228,8 @@ def main():
                         help='random seed (default: 1)')
     parser.add_argument('--log-interval', type=int, default=200, metavar='N',
                         help='how many batches to wait before logging training status')
+    parser.add_argument('--normalization', type=str, default="none", metavar='N',
+                        help='the normalization type')
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
 
