@@ -163,22 +163,22 @@ main(int argc, char * argv[])
                   << "*** Error - Allocation of Memory failed!!!" << std::endl
                   << "***\033[0m" << std::endl;
         if (h_matrixA == NULL){
-            std::cout << "h_matrixA"
+            std::cout << "h_matrixA";
         }
         if (h_matrixB == NULL){
-            std::cout << "h_matrixB"
+            std::cout << "h_matrixB";
         }
         if (h_matrixC == NULL){
-            std::cout << "h_matrixC"
+            std::cout << "h_matrixC";
         }
         if (d_matrixA == NULL){
-            std::cout << "d_matrixA"
+            std::cout << "d_matrixA";
         }
         if (d_matrixB == NULL){
-            std::cout << "d_matrixB"
+            std::cout << "d_matrixB";
         }
         if (d_matrixC == NULL){
-            std::cout << "d_matrixC"
+            std::cout << "d_matrixC";
         }
         exit(-1);
     }
