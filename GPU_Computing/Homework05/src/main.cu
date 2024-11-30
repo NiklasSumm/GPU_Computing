@@ -159,9 +159,7 @@ main(int argc, char * argv[])
     if (h_matrixA == NULL || h_matrixB == NULL || h_matrixC == NULL ||
         d_matrixA == NULL || d_matrixB == NULL || d_matrixC == NULL )
     {
-        std::cout << "\033[31m***" << std::endl
-                  << "*** Error - Allocation of Memory failed!!!" << std::endl
-                  << "***\033[0m" << std::endl;
+        std::cout << "test";
         if (h_matrixA == NULL){
             std::cout << "h_matrixA";
         }
@@ -180,6 +178,10 @@ main(int argc, char * argv[])
         if (d_matrixC == NULL){
             std::cout << "d_matrixC";
         }
+
+        std::cout << "\033[31m***" << std::endl
+                  << "*** Error - Allocation of Memory failed!!!" << std::endl
+                  << "***\033[0m" << std::endl;
         exit(-1);
     }
 
