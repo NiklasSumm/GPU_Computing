@@ -10,12 +10,12 @@ import csv
 import torchvision.ops as tv_nn
 
 class VGG11(nn.Module):
-    def __init__(self, dropout_p=0.5, normalitzation = "none"):
+    def __init__(self, dropout_p=0.5, normalization = "none"):
         super().__init__()
-        self.layers = self._make_layers(dropout_p, normalitzation)
+        self.layers = self._make_layers(dropout_p, normalization)
 
-    def _make_layers(self, dropout_p, normalitzation):
-        if normalitzation == "batch":
+    def _make_layers(self, dropout_p, normalization):
+        if normalization == "batch":
 
             layers = [
                 nn.Conv2d(3, 64, 3, 1, 1),
@@ -69,7 +69,7 @@ class VGG11(nn.Module):
             print("Using batch normalization")
             return nn.ModuleList(layers)
         
-        if normalitzation == "group":
+        if normalization == "group":
             layers = [
                 nn.Conv2d(3, 64, 3, 1, 1),
                 nn.Dropout(dropout_p),
@@ -266,7 +266,7 @@ def main():
     train_loader = torch.utils.data.DataLoader(dataset_train,**train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset_test, **test_kwargs)
 
-    model = VGG11(dropout_p=args.dropout_p, normalitzation=args.normalitzation).to(device)
+    model = VGG11(dropout_p=args.dropout_p, normalization=args.normalization).to(device)
     
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.L2_reg)
 
