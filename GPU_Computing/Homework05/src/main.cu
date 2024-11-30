@@ -41,12 +41,11 @@ matMul_Kernel(int matrixSize, float* matrixA, float* matrixB, float* matrixC)
 
     if (elementIdx < matrixSize && 
         elementIdy < matrixSize) {
-        //float sum = 0;
-        matrixC[elementId] = 0;
+        float sum = 0;
         for (int i = 0; i < matrixSize; i++){
-            matrixC[elementId] += matrixA[elementIdy * matrixSize + i] * matrixB[i * matrixSize + elementIdx];
+            sum += matrixA[elementIdy * matrixSize + i] * matrixB[i * matrixSize + elementIdx];
         }
-        //matrixC[elementId] = sum;
+        matrixC[elementId] = sum;
     }
 }
 
@@ -159,24 +158,23 @@ main(int argc, char * argv[])
     if (h_matrixA == NULL || h_matrixB == NULL || h_matrixC == NULL ||
         d_matrixA == NULL || d_matrixB == NULL || d_matrixC == NULL )
     {
-        std::cout << "test";
         if (h_matrixA == NULL){
-            std::cout << "h_matrixA";
+            std::cout << "h_matrixA" << std::endl;
         }
         if (h_matrixB == NULL){
-            std::cout << "h_matrixB";
+            std::cout << "h_matrixB" << std::endl;
         }
         if (h_matrixC == NULL){
-            std::cout << "h_matrixC";
+            std::cout << "h_matrixC" << std::endl;
         }
         if (d_matrixA == NULL){
-            std::cout << "d_matrixA";
+            std::cout << "d_matrixA" << std::endl;
         }
         if (d_matrixB == NULL){
-            std::cout << "d_matrixB";
+            std::cout << "d_matrixB" << std::endl;
         }
         if (d_matrixC == NULL){
-            std::cout << "d_matrixC";
+            std::cout << "d_matrixC" << std::endl;
         }
 
         std::cout << "\033[31m***" << std::endl
@@ -238,14 +236,14 @@ main(int argc, char * argv[])
               << "***" << std::endl;
 
     // TODO Calculate shared mem size
-    int sharedMemSize = 0;
+    int sharedMemSize = matrixWidth * matrixWidth * sizeof(float);
 
     kernelTimer.start();
 
     //
     // Launch Kernel
     //
-    if (chCommandLineGetBool("shared", argc, argv)) {
+    if (!chCommandLineGetBool("shared", argc, argv)) {
         matMul_Kernel<<<grid_dim, block_dim>>>(matrixWidth, d_matrixA, d_matrixB, d_matrixC);
     } else {
         shMatMul_Kernel<<<grid_dim, block_dim, sharedMemSize>>>(matrixWidth, d_matrixA, d_matrixB, d_matrixC);
