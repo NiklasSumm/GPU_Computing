@@ -10,47 +10,162 @@ import csv
 import torchvision.ops as tv_nn
 
 class VGG11(nn.Module):
-    def __init__(self, dropout_p=0.5):
+    def __init__(self, dropout_p=0.5, normalitzation = "none"):
         super().__init__()
-        self.layers = self._make_layers(dropout_p)
+        self.layers = self._make_layers(dropout_p, normalitzation)
 
-    def _make_layers(self, dropout_p):
+    def _make_layers(self, dropout_p, normalitzation):
+        if normalitzation == "batch":
+
+            layers = [
+                nn.Conv2d(3, 64, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.BatchNorm2d(64),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(64, 128, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.BatchNorm2d(128),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(128, 256, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+                nn.Conv2d(256, 256, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(256, 512, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+                nn.Conv2d(512, 512, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(512, 512, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+                nn.Conv2d(512, 512, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.BatchNorm2d(512),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Flatten(),
+                nn.Linear(512, 4096),
+                nn.Dropout(dropout_p),
+                nn.BatchNorm2d(4096),
+                nn.ReLU(),
+                nn.Linear(4096, 4096),
+                nn.Dropout(dropout_p),
+                nn.BatchNorm2d(4096),
+                nn.ReLU(),
+                nn.Linear(4096, 10),
+            ]
+            return nn.ModuleList(layers)
+        
+        if normalitzation == "group":
+            layers = [
+                nn.Conv2d(3, 64, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.GroupNorm(16, 64),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(64, 128, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.GroupNorm(16, 128),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(128, 256, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.GroupNorm(32, 256),
+                nn.ReLU(),
+                nn.Conv2d(256, 256, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.GroupNorm(32, 256),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(256, 512, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.GroupNorm(32, 512),
+                nn.ReLU(),
+                nn.Conv2d(512, 512, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.GroupNorm(32, 512),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(512, 512, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.GroupNorm(32, 512),
+                nn.ReLU(),
+                nn.Conv2d(512, 512, 3, 1, 1),
+                nn.Dropout(dropout_p),
+                nn.GroupNorm(32, 512),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Flatten(),
+                nn.Linear(512, 4096),
+                nn.Dropout(dropout_p),
+                nn.GroupNorm(1, 4096),
+                nn.ReLU(),
+                nn.Linear(4096, 4096),
+                nn.Dropout(dropout_p),
+                nn.GroupNorm(1, 4096),
+                nn.ReLU(),
+                nn.Linear(4096, 10),
+            ]
+            return nn.ModuleList(layers)
+        
         layers = [
             nn.Conv2d(3, 64, 3, 1, 1),
             nn.Dropout(dropout_p),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
             nn.Conv2d(64, 128, 3, 1, 1),
             nn.Dropout(dropout_p),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
             nn.Conv2d(128, 256, 3, 1, 1),
             nn.Dropout(dropout_p),
+            nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 256, 3, 1, 1),
             nn.Dropout(dropout_p),
+            nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
             nn.Conv2d(256, 512, 3, 1, 1),
             nn.Dropout(dropout_p),
+            nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.Conv2d(512, 512, 3, 1, 1),
             nn.Dropout(dropout_p),
+            nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
             nn.Conv2d(512, 512, 3, 1, 1),
             nn.Dropout(dropout_p),
+            nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.Conv2d(512, 512, 3, 1, 1),
             nn.Dropout(dropout_p),
+            nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
             nn.Flatten(),
             nn.Linear(512, 4096),
             nn.Dropout(dropout_p),
+            nn.BatchNorm2d(4096),
             nn.ReLU(),
             nn.Linear(4096, 4096),
             nn.Dropout(dropout_p),
+            nn.BatchNorm2d(4096),
             nn.ReLU(),
             nn.Linear(4096, 10),
         ]
@@ -144,7 +259,7 @@ def main():
     test_transforms = transforms.Compose([transforms.ToTensor()])
     train_transforms = transforms.Compose([
             transforms.ToTensor(),
-            transforms.RandomInvert(0.4)
+            transforms.Grayscale(3)
         ])
 
     #dataset_train = datasets.SVHN('../data', split='train', download=True, transform=train_transforms)
@@ -156,7 +271,7 @@ def main():
     train_loader = torch.utils.data.DataLoader(dataset_train,**train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset_test, **test_kwargs)
 
-    model = VGG11(dropout_p=args.dropout_p).to(device)
+    model = VGG11(dropout_p=args.dropout_p, normalitzation=args.normalitzation).to(device)
     
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.L2_reg)
 
