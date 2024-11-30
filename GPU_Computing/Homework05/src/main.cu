@@ -133,7 +133,7 @@ main(int argc, char * argv[])
         h_matrixB = static_cast<float*>(malloc(
                         static_cast<size_t>(matrixSize * sizeof(*h_matrixB))));
         h_matrixC = static_cast<float*>(calloc(
-                        static_cast<size_t>(matrixSize * sizeof(*h_matrixC))));
+                        static_cast<size_t>(matrixSize), sizeof *h_matrixC));
 
     } else {
         // Pinned
@@ -162,6 +162,24 @@ main(int argc, char * argv[])
         std::cout << "\033[31m***" << std::endl
                   << "*** Error - Allocation of Memory failed!!!" << std::endl
                   << "***\033[0m" << std::endl;
+        if (h_matrixA == NULL){
+            std::cout << "h_matrixA"
+        }
+        if (h_matrixB == NULL){
+            std::cout << "h_matrixB"
+        }
+        if (h_matrixC == NULL){
+            std::cout << "h_matrixC"
+        }
+        if (d_matrixA == NULL){
+            std::cout << "d_matrixA"
+        }
+        if (d_matrixB == NULL){
+            std::cout << "d_matrixB"
+        }
+        if (d_matrixC == NULL){
+            std::cout << "d_matrixC"
+        }
         exit(-1);
     }
 
