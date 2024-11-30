@@ -41,7 +41,11 @@ matMul_Kernel(int matrixSize, float* matrixA, float* matrixB, float* matrixC)
 
     if (elementIdx < matrixSize && 
         elementIdy < matrixSize) {
-        /*TODO Kernel Code*/
+        float sum = 0;
+        for (int i = 0; i < matrixSize; i++){
+            sum += matrixA[elementIdy * matrixSize + i] * matrixB[i * matrixSize + elementIdx];
+        }
+        matrixC[elementId] = sum;
     }
 }
 
@@ -53,8 +57,8 @@ shMatMul_Kernel(int matrixSize, float* matrixA, float* matrixB, float* matrixC)
 {
     extern __shared__ float sh_Mem[];
     float *sh_MatrixA = &(sh_Mem[0]);
-    float *sh_MatrixB = &(sh_Mem[1 /*TODO Calc offset*/]);
-    float *sh_MatrixC = &(sh_Mem[2 /*TODO Calc offset*/]);
+    float *sh_MatrixB = &(sh_Mem[matrixSize * matrixSize]);
+    float *sh_MatrixC = &(sh_Mem[2 * matrixSize * matrixSize]);
 
     int elementIdx = blockIdx.x * blockDim.x + threadIdx.x;
     int elementIdy = blockIdx.y * blockDim.y + threadIdx.y;
@@ -63,7 +67,15 @@ shMatMul_Kernel(int matrixSize, float* matrixA, float* matrixB, float* matrixC)
 
     if (elementIdx < matrixSize && 
         elementIdy < matrixSize) {
-        /*TODO Kernel Code*/
+        sh_MatrixA[elementId] = matrixA[elementId];
+        sh_MatrixB[elementId] = matrixB[elementId];
+        sh_MatrixC[elementId] = 0;
+
+        for (int i = 0; i < matrixSize; i++){
+            sh_MatrixC[elementId] += sh_MatrixA[elementIdy * matrixSize + i] * sh_MatrixB[i * matrixSize + elementIdx];
+        }
+
+        matrixC[elementId] = sh_MatrixC[elementId];
     }
 }
 //
