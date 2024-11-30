@@ -41,11 +41,12 @@ matMul_Kernel(int matrixSize, float* matrixA, float* matrixB, float* matrixC)
 
     if (elementIdx < matrixSize && 
         elementIdy < matrixSize) {
-        float sum = 0;
+        //float sum = 0;
+        matrixC[elementId] = 0;
         for (int i = 0; i < matrixSize; i++){
-            sum += matrixA[elementIdy * matrixSize + i] * matrixB[i * matrixSize + elementIdx];
+            matrixC[elementId] += matrixA[elementIdy * matrixSize + i] * matrixB[i * matrixSize + elementIdx];
         }
-        matrixC[elementId] = sum;
+        //matrixC[elementId] = sum;
     }
 }
 
