@@ -60,6 +60,7 @@ class BasicBlock(nn.Module):
 class ResNet(nn.Module):
     def __init__(self, norm_layer: Optional[Callable[..., nn.Module]] = nn.Identity):
         super().__init__()
+        self._norm_layer = norm_layer
         self.conv1 = nn.Conv2d(3, 32, 3, 1, padding=1)
         self.block1_1 = BasicBlock(32, 32, 1, self._norm_layer)
         self.block1_2 = BasicBlock(32, 32, 1, self._norm_layer)
