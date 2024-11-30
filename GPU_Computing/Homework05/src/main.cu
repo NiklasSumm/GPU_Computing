@@ -133,7 +133,7 @@ main(int argc, char * argv[])
         h_matrixB = static_cast<float*>(malloc(
                         static_cast<size_t>(matrixSize * sizeof(*h_matrixB))));
         h_matrixC = static_cast<float*>(calloc(
-                        static_cast<size_t>(matrixSize), sizeof *h_matrixC));
+                        static_cast<size_t>(matrixSize * sizeof(*h_matrixC))));
 
     } else {
         // Pinned
