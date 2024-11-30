@@ -149,9 +149,9 @@ main(int argc, char * argv[])
     float* d_matrixA = NULL;
     float* d_matrixB = NULL;
     float* d_matrixC = NULL;
-    cudaMalloc(&d_matrixA, matrixSize * sizeof(*d_matrixA));
-    cudaMalloc(&d_matrixB, matrixSize * sizeof(*d_matrixB));
-    cudaMalloc(&d_matrixC, matrixSize * sizeof(*d_matrixC));
+    cudaMalloc((void**)&d_matrixA, matrixSize * sizeof(*d_matrixA));
+    cudaMalloc((void**)&d_matrixB, matrixSize * sizeof(*d_matrixB));
+    cudaMalloc((void**)&d_matrixC, matrixSize * sizeof(*d_matrixC));
 
     //
     // Check Pointers
