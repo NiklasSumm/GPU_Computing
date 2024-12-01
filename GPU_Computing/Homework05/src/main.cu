@@ -118,7 +118,7 @@ main(int argc, char * argv[])
     chCommandLineGet<int>(&matrixWidth, "size", argc, argv);
     matrixWidth = matrixWidth != 0 ? matrixWidth : DEFAULT_MATRIX_WIDTH;
 
-    std:cout << "size, a_1, b_1, c_1, all_1, a_2, b_2, c_2, all_2, a_4, b_4, c_4, all_4, a_8, b_8, c_8, all_8, a_16, b_16, c_16, all_16, a_32, b_32, c_32, all_32,"
+    std:cout << "size, a_1, b_1, c_1, all_1, a_2, b_2, c_2, all_2, a_4, b_4, c_4, all_4, a_8, b_8, c_8, all_8, a_16, b_16, c_16, all_16, a_32, b_32, c_32, all_32,";
     for (int width = 1; width < 128; width *= 2){
         std:cout << "\n" << width;
         for (int threads = 1; threads < 64; threads *= 2){
