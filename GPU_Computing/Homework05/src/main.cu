@@ -118,6 +118,237 @@ main(int argc, char * argv[])
     chCommandLineGet<int>(&matrixWidth, "size", argc, argv);
     matrixWidth = matrixWidth != 0 ? matrixWidth : DEFAULT_MATRIX_WIDTH;
 
+    std:cout << "size, a_1, b_1, c_1, all_1, a_2, b_2, c_2, all_2, a_4, b_4, c_4, all_4, a_8, b_8, c_8, all_8, a_16, b_16, c_16, all_16, a_32, b_32, c_32, all_32,"
+    for (int width = 1; width < 128; width *= 2){
+        std:cout << "\n" << width;
+        for (int threads = 1; threads < 64; threads *= 2){
+            int matrixSize = width * width;
+
+            //
+            // Host Memory
+            //
+            bool pinnedMemory = chCommandLineGetBool("p", argc, argv);
+            if (!pinnedMemory) {
+                pinnedMemory = chCommandLineGetBool("pinned-memory",argc,argv);
+            }
+
+            float* h_matrixA = NULL;
+            float* h_matrixB = NULL;
+            float* h_matrixC = NULL;
+            if (!pinnedMemory) {
+                // Pageable
+                h_matrixA = static_cast<float*>(malloc(
+                                static_cast<size_t>(matrixSize * sizeof(*h_matrixA))));
+                h_matrixB = static_cast<float*>(malloc(
+                                static_cast<size_t>(matrixSize * sizeof(*h_matrixB))));
+                h_matrixC = static_cast<float*>(calloc(
+                                static_cast<size_t>(matrixSize), sizeof *h_matrixC));
+
+            } else {
+                // Pinned
+                cudaMallocHost(&h_matrixA, static_cast<size_t>(matrixSize * sizeof(*h_matrixA)));
+                cudaMallocHost(&h_matrixB, static_cast<size_t>(matrixSize * sizeof(*h_matrixB)));
+                cudaMallocHost(&h_matrixC, static_cast<size_t>(matrixSize * sizeof(*h_matrixC)));
+                memset ( h_matrixC, 0, matrixSize * sizeof(*h_matrixC) );
+            }
+
+            //
+            // Device Memory
+            //
+            float* d_matrixA = NULL;
+            float* d_matrixB = NULL;
+            float* d_matrixC = NULL;
+            cudaMalloc(&d_matrixA, static_cast<size_t>(matrixSize * sizeof(*d_matrixA)));
+            cudaMalloc(&d_matrixB, static_cast<size_t>(matrixSize * sizeof(*d_matrixB)));
+            cudaMalloc(&d_matrixC, static_cast<size_t>(matrixSize * sizeof(*d_matrixC)));
+
+            //
+            // Check Pointers
+            //
+            if (h_matrixA == NULL || h_matrixB == NULL || h_matrixC == NULL ||
+                d_matrixA == NULL || d_matrixB == NULL || d_matrixC == NULL )
+            {
+                std::cout << "\033[31m***" << std::endl
+                          << "*** Error - Allocation of Memory failed!!!" << std::endl
+                          << "***\033[0m" << std::endl;
+                exit(-1);
+            }
+
+            //
+            // Init Matrices
+            //
+            for (int i = 0; i < matrixSize; i++) {
+                int x = i % width;
+                int y = i / width;
+                h_matrixA[i] = static_cast<float>(x * y);
+                h_matrixB[i] = static_cast<float>(x + y);
+            }
+
+            //
+            // Copy Data to the Device
+            //
+            memCpyH2DTimer.start();
+
+            cudaMemcpy(d_matrixA, h_matrixA, static_cast<size_t>(matrixSize * sizeof(*d_matrixA)), 
+                    cudaMemcpyHostToDevice);
+            cudaMemcpy(d_matrixB, h_matrixB, static_cast<size_t>(matrixSize * sizeof(*d_matrixB)), 
+                    cudaMemcpyHostToDevice);
+
+            memCpyH2DTimer.stop();
+
+            //
+            // Get Kernel Launch Parameters
+            //
+            int blockSize = threads,
+                gridSize = 0;
+
+            // Block Dimension / Threads per Block
+            //chCommandLineGet<int>(&blockSize,"t", argc, argv);
+            //chCommandLineGet<int>(&blockSize,"threads-per-block", argc, argv);
+            //blockSize = blockSize != 0 ? blockSize : DEFAULT_BLOCK_DIM;
+
+            if (blockSize > 32) {
+                std::cout << "\033[31m***" << std::endl
+                          << "*** Error - The number of threads per block is too big" << std::endl
+                          << "***\033[0m" << std::endl;
+                exit(-1);
+            }
+
+            gridSize = ceil(static_cast<float>(matrixWidth) / static_cast<float>(blockSize));
+
+            dim3 grid_dim = dim3(gridSize, gridSize, 1);
+            dim3 block_dim = dim3(blockSize, blockSize, 1);
+
+            //std::cout << "***" << std::endl
+            //          << "*** Grid Dim:  " << grid_dim.x << "x" << grid_dim.y << "x" << grid_dim.z 
+            //                  << std::endl
+            //          << "*** Block Dim: " << block_dim.x << "x" << block_dim.y << "x" << block_dim.z 
+            //                  << std::endl
+            //          << "***" << std::endl;
+
+            // TODO Calculate shared mem size
+            int sharedMemSize = matrixWidth * matrixWidth * sizeof(float) * 3;
+
+            kernelTimer.start();
+
+            //
+            // Launch Kernel
+            //
+            //if (!chCommandLineGetBool("shared", argc, argv)) {
+            //    matMul_Kernel<<<grid_dim, block_dim>>>(matrixWidth, d_matrixA, d_matrixB, d_matrixC);
+            //} else {
+                shMatMul_Kernel<<<grid_dim, block_dim, sharedMemSize>>>(matrixWidth, d_matrixA, d_matrixB, d_matrixC);
+            //}
+
+            //
+            // Synchronize
+            //
+            cudaDeviceSynchronize();
+
+            //
+            // Check for Errors
+            //
+            cudaError_t cudaError = cudaGetLastError();
+            if ( cudaError != cudaSuccess ) {
+                std::cout << "\033[31m***" << std::endl
+                          << "***ERROR*** " << cudaError << " - " << cudaGetErrorString(cudaError)
+                            << std::endl
+                          << "***\033[0m" << std::endl;
+
+                return -1;
+            }
+
+            kernelTimer.stop();
+
+            //
+            // Copy Back Data
+            //
+            memCpyD2HTimer.start();
+
+            cudaMemcpy(h_matrixC, d_matrixC, static_cast<size_t>(matrixSize * sizeof(*d_matrixC)), 
+                    cudaMemcpyDeviceToHost);
+
+            memCpyD2HTimer.stop();
+
+            //
+            // Check Result
+            //
+            bool dontCheckResult = chCommandLineGetBool("c", argc, argv);
+            if (!dontCheckResult) {
+                dontCheckResult = chCommandLineGetBool("no-check", argc, argv);
+            }
+
+            if (!dontCheckResult) {
+                float* h_matrixD = static_cast<float*>(
+                        calloc(static_cast<size_t>(matrixSize), sizeof(*h_matrixD)));
+
+                MatrixMulOnHostBlocked(h_matrixA, h_matrixB, h_matrixD, 
+                        static_cast<long>(matrixWidth), 32);
+
+                bool resultOk = MatrixCompare(h_matrixC, h_matrixD, 
+                        static_cast<long>(matrixWidth));
+
+                //for (int i = 0; i < matrixWidth; i++){
+                //    for (int j = 0; j < matrixWidth; j++){
+                //        printf(" [%f - %f] ", h_matrixC[i * matrixWidth + j], h_matrixD[i * matrixWidth + j]);
+                //    }
+                //    printf("\n");
+                //}
+
+                if (!resultOk) {
+                    std::cout << "\033[31m***" << std::endl
+                              << "*** Error - The two matrices are different!!!" << std::endl
+                              << "***\033[0m" << std::endl;
+
+                    exit(-1);
+                }
+
+                free(h_matrixD);
+            }
+
+            std:cout << ", " << 1e3 * memCpyH2DTimer.getTime() << ", " << 1e3 * kernelTimer.getTime() << ", " << 1e3 * memCpyD2HTimer.getTime() << ", " << 1e3 * (memCpyH2DTimer.getTime() + memCpyD2HTimer.getTime() + kernelTimer.getTime());
+
+            //
+            // Print Meassurement Results
+            //
+            //std::cout << "***" << std::endl
+            //          << "*** Results:" << std::endl
+            //          << "***    Matrix Size: " << matrixSize << std::endl
+            //          << "***    Time to Copy to Device: " << 1e3 * memCpyH2DTimer.getTime()
+            //            << " ms" << std::endl
+            //          << "***    Copy Bandwidth: " 
+            //            << 1e-9 * memCpyH2DTimer.getBandwidth(2 * matrixSize * sizeof(*h_matrixA))
+            //            << " GB/s" << std::endl
+            //          << "***    Time to Copy from Device: " << 1e3 * memCpyD2HTimer.getTime()
+            //            << " ms" << std::endl
+            //          << "***    Copy Bandwidth: " 
+            //            << 1e-9 * memCpyD2HTimer.getBandwidth(matrixSize * sizeof(*h_matrixA))
+            //            << " GB/s" << std::endl
+            //          << "***    Time for Matrix Multiplication: " << 1e3 * kernelTimer.getTime()
+            //              << " ms" << std::endl
+            //          << "***" << std::endl;
+
+            if (chCommandLineGetBool("print-matrix", argc, argv) 
+               && matrixWidth <= 16) {
+                printOutMatrix(h_matrixC, matrixWidth);
+            }
+
+            // Free Memory
+            if (!pinnedMemory) {
+                free(h_matrixA);
+                free(h_matrixB);
+                free(h_matrixC);
+            } else {
+                cudaFreeHost(h_matrixA);
+                cudaFreeHost(h_matrixB);
+                cudaFreeHost(h_matrixC);
+            }
+            cudaFree(d_matrixA);
+            cudaFree(d_matrixB);
+            cudaFree(d_matrixC);
+        }
+    }
+
     int matrixSize = matrixWidth * matrixWidth;
 
     //
