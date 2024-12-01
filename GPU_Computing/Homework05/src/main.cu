@@ -67,9 +67,11 @@ shMatMul_Kernel(int matrixSize, float* matrixA, float* matrixB, float* matrixC)
 
     if (elementIdx < matrixSize && 
         elementIdy < matrixSize) {
-        sh_MatrixA[elementId] = matrixA[elementId];
-        sh_MatrixB[elementId] = matrixB[elementId];
-        sh_MatrixC[elementId] = 0;
+        for (int i = elementId; i < matrixSize * matrixSize; i += blockDim.x * blockDim.y){
+            sh_MatrixA[elementId] = matrixA[elementId];
+            sh_MatrixB[elementId] = matrixB[elementId];
+            sh_MatrixC[elementId] = 0;
+        }
 
         __syncthreads();
 
