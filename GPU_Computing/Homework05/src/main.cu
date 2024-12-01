@@ -71,6 +71,8 @@ shMatMul_Kernel(int matrixSize, float* matrixA, float* matrixB, float* matrixC)
         sh_MatrixB[elementId] = matrixB[elementId];
         sh_MatrixC[elementId] = 0;
 
+        __syncthreads();
+
         for (int i = 0; i < matrixSize; i++){
             sh_MatrixC[elementId] += sh_MatrixA[elementIdy * matrixSize + i] * sh_MatrixB[i * matrixSize + elementIdx];
         }
@@ -158,25 +160,6 @@ main(int argc, char * argv[])
     if (h_matrixA == NULL || h_matrixB == NULL || h_matrixC == NULL ||
         d_matrixA == NULL || d_matrixB == NULL || d_matrixC == NULL )
     {
-        if (h_matrixA == NULL){
-            std::cout << "h_matrixA" << std::endl;
-        }
-        if (h_matrixB == NULL){
-            std::cout << "h_matrixB" << std::endl;
-        }
-        if (h_matrixC == NULL){
-            std::cout << "h_matrixC" << std::endl;
-        }
-        if (d_matrixA == NULL){
-            std::cout << "d_matrixA" << std::endl;
-        }
-        if (d_matrixB == NULL){
-            std::cout << "d_matrixB" << std::endl;
-        }
-        if (d_matrixC == NULL){
-            std::cout << "d_matrixC" << std::endl;
-        }
-
         std::cout << "\033[31m***" << std::endl
                   << "*** Error - Allocation of Memory failed!!!" << std::endl
                   << "***\033[0m" << std::endl;
