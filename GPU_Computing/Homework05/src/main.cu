@@ -214,7 +214,7 @@ main(int argc, char * argv[])
                 exit(-1);
             }
 
-            gridSize = ceil(static_cast<float>(matrixWidth) / static_cast<float>(blockSize));
+            gridSize = ceil(static_cast<float>(width) / static_cast<float>(blockSize));
 
             dim3 grid_dim = dim3(gridSize, gridSize, 1);
             dim3 block_dim = dim3(blockSize, blockSize, 1);
@@ -227,7 +227,7 @@ main(int argc, char * argv[])
             //          << "***" << std::endl;
 
             // TODO Calculate shared mem size
-            int sharedMemSize = matrixWidth * matrixWidth * sizeof(float) * 3;
+            int sharedMemSize = width * width * sizeof(float) * 3;
 
             kernelTimer.start();
 
@@ -237,7 +237,7 @@ main(int argc, char * argv[])
             //if (!chCommandLineGetBool("shared", argc, argv)) {
             //    matMul_Kernel<<<grid_dim, block_dim>>>(matrixWidth, d_matrixA, d_matrixB, d_matrixC);
             //} else {
-                shMatMul_Kernel<<<grid_dim, block_dim, sharedMemSize>>>(matrixWidth, d_matrixA, d_matrixB, d_matrixC);
+                shMatMul_Kernel<<<grid_dim, block_dim, sharedMemSize>>>(width, d_matrixA, d_matrixB, d_matrixC);
             //}
 
             //
@@ -283,10 +283,10 @@ main(int argc, char * argv[])
                         calloc(static_cast<size_t>(matrixSize), sizeof(*h_matrixD)));
 
                 MatrixMulOnHostBlocked(h_matrixA, h_matrixB, h_matrixD, 
-                        static_cast<long>(matrixWidth), 32);
+                        static_cast<long>(width), 32);
 
                 bool resultOk = MatrixCompare(h_matrixC, h_matrixD, 
-                        static_cast<long>(matrixWidth));
+                        static_cast<long>(width));
 
                 //for (int i = 0; i < matrixWidth; i++){
                 //    for (int j = 0; j < matrixWidth; j++){
