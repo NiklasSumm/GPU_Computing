@@ -219,7 +219,7 @@ main(int argc, char * argv[])
               << "***" << std::endl;
 
     // TODO Calculate shared mem size
-    int sharedMemSize = matrixWidth * matrixWidth * sizeof(float);
+    int sharedMemSize = matrixWidth * matrixWidth * sizeof(float) * 3;
 
     kernelTimer.start();
 
