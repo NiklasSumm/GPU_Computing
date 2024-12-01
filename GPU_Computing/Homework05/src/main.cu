@@ -280,6 +280,13 @@ main(int argc, char * argv[])
         bool resultOk = MatrixCompare(h_matrixC, h_matrixD, 
                 static_cast<long>(matrixWidth));
 
+        for (i = 0; i < matrixWidth; i++){
+            for (j = 0; j < matrixWidth; j++){
+                printf(" [%f - %f] ", h_matrixC[i * matrixWidth + j], h_matrixD[i * matrixWidth + j]);
+            }
+            printf("\n");
+        }
+                
         if (!resultOk) {
             std::cout << "\033[31m***" << std::endl
                       << "*** Error - The two matrices are different!!!" << std::endl
