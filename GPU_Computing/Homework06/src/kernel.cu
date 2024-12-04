@@ -25,7 +25,7 @@ reduction_Kernel(int numElements, float* dataIn, float* dataOut)
 
   	sh_Data[threadIdx.x] = dataIn[elementId];
 
-  	__syncThreads();
+  	__syncthreads();
 
   	for (unsigned int s = 1; s < blockDim.x; s *= 2) {
     	if ((threadIdx.x % (2 * s)) == 0) {
@@ -51,7 +51,7 @@ reduction_Kernel_improved(int numElements, float* dataIn, float* dataOut)
 
   	sh_Data[threadIdx.x] = dataIn[elementId] + dataIn[elementId + blockDim.x];
 
-  	__syncThreads();
+  	__syncthreads();
 
   	for ( unsigned int o = blockDim.x / 2; o > 0; o >>= 1 ) {
 		if (threadIdx.x < o ) {
