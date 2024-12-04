@@ -31,7 +31,7 @@ reduction_Kernel(int numElements, float* dataIn, float* dataOut)
     	if ((threadIdx.x % (2 * s)) == 0) {
       		sh_Data[threadIdx.x] += sh_Data[threadIdx.x + s];
     	}
-    	__syncThreads();
+    	__syncthreads();
   	}
 
   	if (threadIdx.x == 0) dataOut[blockIdx.x] = sh_Data[0];
