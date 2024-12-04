@@ -46,7 +46,7 @@ float CPU_reduction(int numElements, float* inData){
 	timer.stop();
 
 	std::cout << "CPU execution time: " << 1e3 * timer.getTime() << " ms" << std::endl
-		<< "CPU bandwidth: " << timer.getBandwidth(numElements * sizeof(float)) << " GB/s" << std::endl;
+		<< "CPU bandwidth: " << 1e-9 * timer.getBandwidth(numElements * sizeof(float)) << " GB/s" << std::endl;
 
 	return sum;
 }
