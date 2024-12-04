@@ -188,6 +188,9 @@ main(int argc, char * argv[])
 
 	float CPU_result = CPU_reduction(numElements, h_dataIn);
 
+	//Warmup kernel
+	reduction_Kernel_Wrapper(grid_dim, block_dim, numElements, d_dataIn, d_intermediateSums);
+
 	kernelTimer.start();
 	
 	if(!chCommandLineGetBool("thrust", argc, argv)){
