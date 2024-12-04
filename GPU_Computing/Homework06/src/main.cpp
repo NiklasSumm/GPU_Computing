@@ -27,8 +27,29 @@ void printHelp(char *);
 
 
 extern void reduction_Kernel_Wrapper(dim3 gridSize, dim3 blockSize, int numElements, float* dataIn, float* dataOut);
+extern void reduction_Kernel_improved_Wrapper(dim3 gridSize, dim3 blockSize, int numElements, float* dataIn, float* dataOut);
 
 extern void thrust_reduction_Wrapper(int numElements, float* dataIn, float* dataOut);
+
+
+float CPU_reduction(int numElements, float* inData){
+
+	ChTimer timer;
+	timer.start();
+
+	float sum = 0.0;
+
+	for (int i = 0; i < numElements; i++){
+		sum += inData[i];
+	}
+
+	timer.stop();
+
+	std::cout << "CPU execution time: " << 1e3 * timer.getTime() << " ms" << std::endl
+		<< "CPU bandwidth: " << timer.getBandwidth(numElements * sizeof(float)) << " GB/s" << std::endl;
+
+	return sum;
+}
 
 //
 // Main
@@ -98,6 +119,7 @@ main(int argc, char * argv[])
 
 	// Device Memory
 	float* d_dataIn = NULL;
+	float* d_intermediateSums = NULL;
 	float* d_dataOut = NULL;
 	cudaMalloc(&d_dataIn, 
 			static_cast<size_t>(numElements * sizeof(*d_dataIn)));
@@ -149,15 +171,36 @@ main(int argc, char * argv[])
 		exit(-1);
 	}
 
-	gridSize = ceil(static_cast<float>(numElements) / static_cast<float>(blockSize));
+	bool improved = chCommandLineGetBool("improved", argc, argv);
+
+	if (improved){
+		gridSize = ceil(static_cast<float>(numElements) / (static_cast<float>(blockSize) * 2));
+	}
+	else{
+		gridSize = ceil(static_cast<float>(numElements) / static_cast<float>(blockSize));
+	}
+
+	cudaMalloc(&d_intermediateSums, 
+		static_cast<size_t>(gridSize * sizeof(*d_intermediateSums)));
 
 	dim3 grid_dim = dim3(gridSize);
 	dim3 block_dim = dim3(blockSize);
 
+	float CPU_result = CPU_reduction(numElements, h_dataIn);
+
 	kernelTimer.start();
 	
 	if(!chCommandLineGetBool("thrust", argc, argv)){
-		reduction_Kernel_Wrapper(grid_dim, block_dim, numElements, d_dataIn, d_dataOut);
+		if(!improved){
+			reduction_Kernel_Wrapper(grid_dim, block_dim, numElements, d_dataIn, d_intermediateSums);
+			cudaDeviceSynchronize();
+			reduction_Kernel_Wrapper(1, grid_dim, gridSize, d_intermediateSums, d_dataOut);
+		}
+		else{
+			reduction_Kernel_improved_Wrapper(grid_dim, block_dim, numElements, d_dataIn, d_intermediateSums);
+			cudaDeviceSynchronize();
+			reduction_Kernel_improved_Wrapper(1, dim3(grid_dim.x / 2), gridSize, d_intermediateSums, d_dataOut);
+		}
 	} else{
 		thrust_reduction_Wrapper(numElements, d_dataIn, d_dataOut);
 	}
@@ -189,6 +232,13 @@ main(int argc, char * argv[])
 			cudaMemcpyDeviceToHost);
 
 	memCpyD2HTimer.stop();
+
+	if ((h_dataOut[0] - CPU_result) / (h_dataOut[0] * CPU_result) < 1e-5){
+		std::cout << "Result correct!" << std::endl;
+	}
+	else{
+		std::cout << "Result NOT correct!" << std::endl;
+	}
 
 	// Print Meassurement Results
 	std::cout << "***" << std::endl
