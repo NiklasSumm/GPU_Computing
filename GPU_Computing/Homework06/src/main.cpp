@@ -197,7 +197,8 @@ main(int argc, char * argv[])
 		if(!improved){
 			reduction_Kernel_Wrapper(grid_dim, block_dim, numElements, d_dataIn, d_intermediateSums);
 			cudaDeviceSynchronize();
-			reduction_Kernel_Wrapper(1, std::min(grid_dim, 1024), gridSize, d_intermediateSums, d_dataOut);
+			int newBlockDim = dim3(std::min(grid_dim.x, 1024));
+			reduction_Kernel_Wrapper(dim3(1), newBlockDim, gridSize, d_intermediateSums, d_dataOut);
 		}
 		else{
 			reduction_Kernel_improved_Wrapper(grid_dim, block_dim, numElements, d_dataIn, d_intermediateSums);
