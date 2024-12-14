@@ -21,18 +21,38 @@ reduction_Kernel(int numElements, float* dataIn, float* dataOut)
 {
   	extern __shared__ float sh_Data[];
 
-  	int elementId = blockIdx.x * blockDim.x + threadIdx.x;
+	int numElementsShared = sizeof(sh_Data) / sizeof(float);
 
-  	sh_Data[threadIdx.x] = dataIn[elementId];
+	int totalThreads = blockDim.x * gridDim.x;
+
+	int copiesPerThread = numElements + totalThreads + 1 / totalThreads;
+
+	for (int i = 0; i < copiesPerThread; i++){
+		int elementId = copiesPerThread * blockIdx.x * blockDim.x + threadIdx.x + i * blockDim.x;
+		int sharedId = threadIdx.x + i * blockDim.x;
+		if (sharedId < numElementsShared){
+			if (elementId < numElements){
+				sh_Data[sharedId] = dataIn[elementId];
+			}
+			else{
+				sh_Data[sharedId] = 0;
+			}
+		}
+	}
 
   	__syncthreads();
 
-  	for (unsigned int s = 1; s < blockDim.x; s *= 2) {
-    	if ((threadIdx.x % (2 * s)) == 0) {
-      		sh_Data[threadIdx.x] += sh_Data[threadIdx.x + s];
-    	}
-    	__syncthreads();
-  	}
+	for (int i = 0; i < copiesPerThread; i++){
+  		for (unsigned int s = 1; s < blockDim.x * copiesPerThread; s *= 2) {
+			int id = threadIdx.x + i * blockDim.x;
+    		if ((id % (2 * s)) == 0) {
+				if (id + s < numElementsShared){
+					sh_Data[id] += sh_Data[id + s];
+				}
+    		}
+    		__syncthreads();
+  		}
+	}
 
   	if (threadIdx.x == 0) dataOut[blockIdx.x] = sh_Data[0];
 }
@@ -47,15 +67,17 @@ reduction_Kernel_improved(int numElements, float* dataIn, float* dataOut)
 {
 	extern __shared__ float sh_Data[];
 
-  	int elementId = 2 * blockIdx.x * blockDim.x + threadIdx.x;
+  	int tid = 2 * blockIdx.x * blockDim.x + threadIdx.x;
 
-  	sh_Data[threadIdx.x] = dataIn[elementId] + dataIn[elementId + blockDim.x];
+  	sh_Data[threadIdx.x] = dataIn[tid] + dataIn[tid + blockDim.x];
 
   	__syncthreads();
 
   	for ( unsigned int o = blockDim.x / 2; o > 0; o >>= 1 ) {
 		if (threadIdx.x < o ) {
-			sh_Data[threadIdx.x] += sh_Data[threadIdx.x + o];
+			if (tid < numElements){
+				sh_Data[threadIdx.x] += sh_Data[threadIdx.x + o];
+			}
 		}
 		__syncthreads();
 	}
