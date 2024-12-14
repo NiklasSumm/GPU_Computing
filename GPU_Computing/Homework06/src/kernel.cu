@@ -17,11 +17,9 @@
 // Reduction_Kernel
 //
 __global__ void
-reduction_Kernel(int numElements, float* dataIn, float* dataOut)
+reduction_Kernel(int numElements, int numElementsShared, float* dataIn, float* dataOut)
 {
   	extern __shared__ float sh_Data[];
-
-	int numElementsShared = sizeof(sh_Data) / sizeof(float);
 
 	int totalThreads = blockDim.x * gridDim.x;
 
@@ -59,11 +57,11 @@ reduction_Kernel(int numElements, float* dataIn, float* dataOut)
 
 void reduction_Kernel_Wrapper(dim3 gridSize, dim3 blockSize, int numElements, float* dataIn, float* dataOut) {
 	int sharedMemSize = numElements * sizeof(float) / gridSize.x;
-	reduction_Kernel<<< gridSize, blockSize, sharedMemSize>>>(numElements, dataIn, dataOut);
+	reduction_Kernel<<< gridSize, blockSize, sharedMemSize>>>(numElements, sharedMemSize / sizeof(float), dataIn, dataOut);
 }
 
 __global__ void
-reduction_Kernel_improved(int numElements, float* dataIn, float* dataOut)
+reduction_Kernel_improved(int numElements, int numElementsShared, float* dataIn, float* dataOut)
 {
 	extern __shared__ float sh_Data[];
 
@@ -87,7 +85,7 @@ reduction_Kernel_improved(int numElements, float* dataIn, float* dataOut)
 
 void reduction_Kernel_improved_Wrapper(dim3 gridSize, dim3 blockSize, int numElements, float* dataIn, float* dataOut) {
 	int sharedMemSize = numElements * sizeof(float) / (gridSize.x * 2);
-	reduction_Kernel_improved<<< gridSize, blockSize, sharedMemSize>>>(numElements, dataIn, dataOut);
+	reduction_Kernel_improved<<< gridSize, blockSize, sharedMemSize>>>(numElements, sharedMemSize / sizeof(float), dataIn, dataOut);
 }
 
 //
