@@ -16,6 +16,7 @@
 #include <chCommandLine.h>
 #include <chTimer.hpp>
 #include <cuda_runtime.h>
+#include <bits/stdc++.h>
 
 const static int DEFAULT_MATRIX_SIZE = 1024;
 const static int DEFAULT_BLOCK_DIM   =  128;
