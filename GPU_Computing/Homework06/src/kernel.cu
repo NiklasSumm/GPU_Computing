@@ -40,8 +40,8 @@ reduction_Kernel(int numElements, int numElementsShared, float* dataIn, float* d
 
   	__syncthreads();
 
-	for (int i = 0; i < copiesPerThread; i++){
-  		for (unsigned int s = 1; s < blockDim.x * copiesPerThread; s *= 2) {
+  	for (unsigned int s = 1; s < blockDim.x * copiesPerThread; s *= 2) {
+		for (int i = 0; i < copiesPerThread; i++){
 			int id = threadIdx.x + i * blockDim.x;
     		if ((id % (2 * s)) == 0) {
 				if (id + s < numElementsShared){
