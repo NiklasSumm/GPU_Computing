@@ -16,7 +16,6 @@
 #include <chCommandLine.h>
 #include <chTimer.hpp>
 #include <cuda_runtime.h>
-#include <bits/stdc++.h>
 
 const static int DEFAULT_MATRIX_SIZE = 1024;
 const static int DEFAULT_BLOCK_DIM   =  128;
@@ -198,7 +197,7 @@ main(int argc, char * argv[])
 		if(!improved){
 			reduction_Kernel_Wrapper(grid_dim, block_dim, numElements, d_dataIn, d_intermediateSums);
 			cudaDeviceSynchronize();
-			int newBlockDim = dim3(std::min(grid_dim.x, 1024));
+			int newBlockDim = (grid_dim.x < 1024) ? grid_dim : dim3(1024);
 			reduction_Kernel_Wrapper(dim3(1), newBlockDim, gridSize, d_intermediateSums, d_dataOut);
 		}
 		else{
