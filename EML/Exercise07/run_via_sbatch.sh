@@ -11,4 +11,4 @@ eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate eml
 
 echo "Running VGG11.py"
-python VGG11QuantW.py
+python VGG11QuantW.py --epochs=30 --bit-width=8
