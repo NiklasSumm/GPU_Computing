@@ -151,11 +151,11 @@ def main():
             transforms.Grayscale(3)
         ])
 
-    #dataset_train = datasets.SVHN('../data', split='train', download=True, transform=train_transforms)
-    #dataset_test = datasets.SVHN('../data', split='test', download=True, transform=test_transforms)
+    dataset_train = datasets.SVHN('../data', split='train', download=True, transform=train_transforms)
+    dataset_test = datasets.SVHN('../data', split='test', download=True, transform=test_transforms)
 
-    dataset_train = datasets.CIFAR10('../data', train=True, download=True, transform=train_transforms)
-    dataset_test = datasets.CIFAR10('../data', train=False, download=True, transform=test_transforms)
+    #dataset_train = datasets.CIFAR10('../data', train=True, download=True, transform=train_transforms)
+    #dataset_test = datasets.CIFAR10('../data', train=False, download=True, transform=test_transforms)
 
     train_loader = torch.utils.data.DataLoader(dataset_train,**train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset_test, **test_kwargs)
