@@ -56,7 +56,6 @@ class VGG11(nn.Module):
             nn.ReLU(),
             qnn.QuantLinear(4096, 10, bias=True, weight_bit_width=8),
         ]
-        print("Using no normalization")
         return nn.ModuleList(layers)
 
     def forward(self, x):
@@ -177,13 +176,13 @@ def main():
         data_epoch.append({"Epoch": epoch, "Accuracy": accuracy})
         data_time.append({"Time": current_time, "Accuracy": accuracy})
 
-    with open("TAQ_bitWidth" + str(args.bitWidth) + "_Accuracy_time.csv", 'w', newline='') as csvfile:
+    with open("QuantW_TAQ_bitWidth" + str(args.bitWidth) + "_Accuracy_time.csv", 'w', newline='') as csvfile:
         fieldnames = ["Time", "Accuracy"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data_time)
 
-    with open("TAQ_bitWidth" + str(args.bitWidth) + "_Accuracy.csv", 'w', newline='') as csvfile:
+    with open("QuantW_TAQ_bitWidth" + str(args.bitWidth) + "_Accuracy.csv", 'w', newline='') as csvfile:
         fieldnames = ["Epoch", "Accuracy"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
