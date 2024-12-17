@@ -12,46 +12,46 @@ import brevitas.nn as qnn
 
 
 class VGG11(nn.Module):
-    def __init__(self, dropout_p=0.5):
+    def __init__(self, bit_width=8, dropout_p=0.5):
         super().__init__()
-        self.layers = self._make_layers(dropout_p)
+        self.layers = self._make_layers(dropout_p, bit_width)
 
-    def _make_layers(self, dropout_p):
+    def _make_layers(self, dropout_p, bit_width):
         layers = [
             qnn.QuantConv2d(3, 64, 3, 1, 1, bias=True, weight_bit_width=8),
             nn.Dropout(dropout_p),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-            qnn.QuantConv2d(64, 128, 3, 1, 1, bias=True, weight_bit_width=8),
+            qnn.QuantConv2d(64, 128, 3, 1, 1, bias=True, weight_bit_width=bit_width),
             nn.Dropout(dropout_p),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-            qnn.QuantConv2d(128, 256, 3, 1, 1, bias=True, weight_bit_width=8),
+            qnn.QuantConv2d(128, 256, 3, 1, 1, bias=True, weight_bit_width=bit_width),
             nn.Dropout(dropout_p),
             nn.ReLU(),
-            qnn.QuantConv2d(256, 256, 3, 1, 1, bias=True, weight_bit_width=8),
-            nn.Dropout(dropout_p),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            qnn.QuantConv2d(256, 512, 3, 1, 1, bias=True, weight_bit_width=8),
-            nn.Dropout(dropout_p),
-            nn.ReLU(),
-            qnn.QuantConv2d(512, 512, 3, 1, 1, bias=True, weight_bit_width=8),
+            qnn.QuantConv2d(256, 256, 3, 1, 1, bias=True, weight_bit_width=bit_width),
             nn.Dropout(dropout_p),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-            qnn.QuantConv2d(512, 512, 3, 1, 1, bias=True, weight_bit_width=8),
+            qnn.QuantConv2d(256, 512, 3, 1, 1, bias=True, weight_bit_width=bit_width),
             nn.Dropout(dropout_p),
             nn.ReLU(),
-            qnn.QuantConv2d(512, 512, 3, 1, 1, bias=True, weight_bit_width=8),
+            qnn.QuantConv2d(512, 512, 3, 1, 1, bias=True, weight_bit_width=bit_width),
+            nn.Dropout(dropout_p),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            qnn.QuantConv2d(512, 512, 3, 1, 1, bias=True, weight_bit_width=bit_width),
+            nn.Dropout(dropout_p),
+            nn.ReLU(),
+            qnn.QuantConv2d(512, 512, 3, 1, 1, bias=True, weight_bit_width=bit_width),
             nn.Dropout(dropout_p),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
             nn.Flatten(),
-            qnn.QuantLinear(512, 4096, bias=True, weight_bit_width=8),
+            qnn.QuantLinear(512, 4096, bias=True, weight_bit_width=bit_width),
             nn.Dropout(dropout_p),
             nn.ReLU(),
-            qnn.QuantLinear(4096, 4096, bias=True, weight_bit_width=8),
+            qnn.QuantLinear(4096, 4096, bias=True, weight_bit_width=bit_width),
             nn.Dropout(dropout_p),
             nn.ReLU(),
             qnn.QuantLinear(4096, 10, bias=True, weight_bit_width=8),
@@ -125,6 +125,8 @@ def main():
                         help='how many batches to wait before logging training status')
     parser.add_argument('--normalization', type=str, default="none", metavar='N',
                         help='the normalization type')
+    parser.add_argument('--bit-width', type=int, default=8, metavar='W',
+                        help='the quantization bit width')
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -147,10 +149,7 @@ def main():
         test_kwargs.update(cuda_kwargs)
 
     test_transforms = transforms.Compose([transforms.ToTensor()])
-    train_transforms = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Grayscale(3)
-        ])
+    train_transforms = transforms.Compose([transforms.ToTensor()])
 
     #dataset_train = datasets.SVHN('../data', split='train', download=True, transform=train_transforms)
     #dataset_test = datasets.SVHN('../data', split='test', download=True, transform=test_transforms)
@@ -161,7 +160,7 @@ def main():
     train_loader = torch.utils.data.DataLoader(dataset_train,**train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset_test, **test_kwargs)
 
-    model = VGG11(dropout_p=args.dropout_p).to(device)
+    model = VGG11(bit_width=args.bit_width, dropout_p=args.dropout_p).to(device)
     
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.L2_reg)
 
@@ -189,10 +188,6 @@ def main():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data_epoch)
-
-    torch.set_printoptions(threshold=10_000_000)
-    with open("Weights_L2_reg" + str(args.L2_reg) +".txt", "a") as txtfile:
-        txtfile.write(str(model.layers[25].weight.data))
 
     if (args.L2_reg is not None):
         f_name = f'trained_VGG11_L2-{args.L2_reg}.pt'
