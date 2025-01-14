@@ -9,16 +9,57 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 
+class TTQConv2d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True):
+        super(TTQConv2d, self).__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.dilation = dilation
+        self.groups = groups
+        self.bias = bias
+
+        self.weight = nn.Parameter(torch.Tensor(out_channels, in_channels // groups, *kernel_size))
+        self.weight_positive_scale = nn.Parameter(torch.Tensor(1))
+        self.weight_negative_scale = nn.Parameter(torch.Tensor(1))
+        
+        if bias:
+            self.bias_param = nn.Parameter(torch.Tensor(out_channels))
+        else:
+            self.register_parameter('bias_param', None)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        nn.init.ones_(self.weight_positive_scale)
+        nn.init.ones_(self.weight_negative_scale)
+        if self.bias is not None:
+            fan_in = self.in_channels * self.kernel_size[0] * self.kernel_size[1]
+            bound = 1 / math.sqrt(fan_in)
+            nn.init.uniform_(self.bias_param, -bound, bound)
+
+    def quantize_weights(self):
+        weight_positive = self.weight_positive_scale * torch.gt(self.weight, 0).float()
+        weight_negative = self.weight_negative_scale * torch.lt(self.weight, 0).float()
+        ternary_weight = weight_positive + weight_negative
+        return ternary_weight
+
+    def forward(self, x):
+        ternary_weight = self.quantize_weights()
+        return F.conv2d(x, ternary_weight, self.bias_param, self.stride, self.padding, self.dilation, self.groups)
 
 # TODO: Implement the CNN class, as defined in the exercise!
 class CNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv0 = nn.Conv2d(3, 32, 3, 1)
+        self.conv0 = TTQConv2d(3, 32, 3, 1)
         self.relu0 = nn.ReLU()
-        self.conv1 = nn.Conv2d(32, 64, 3, 2)
+        self.conv1 = TTQConv2d(32, 64, 3, 2)
         self.relu1 = nn.ReLU()
-        self.conv2 = nn.Conv2d(64, 128 , 3, 1)
+        self.conv2 = TTQConv2d(64, 128 , 3, 1)
         self.relu2 = nn.ReLU()
         self.flatten = nn.Flatten()
         self.relu3 = nn.ReLU()
