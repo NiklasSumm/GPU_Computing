@@ -144,13 +144,13 @@ def main():
         data_epoch.append({"Epoch": epoch, "Accuracy": accuracy})
 
 
-    with open(args.model + "_" + args.dataset + "_" + "lr" + str(args.lr) + "_" + args.optimizer + "_time.csv", 'w', newline='') as csvfile:
+    with open("time.csv", 'w', newline='') as csvfile:
         fieldnames = ["Time", "Accuracy"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data_time)
 
-    with open(args.model + "_" + args.dataset + "_" + "lr" + str(args.lr) + "_" + args.optimizer + "_epoch.csv", 'w', newline='') as csvfile:
+    with open("epoch.csv", 'w', newline='') as csvfile:
         fieldnames = ["Epoch", "Accuracy"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
